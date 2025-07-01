@@ -4,6 +4,7 @@ import { DialogueImpl } from '../models/dialogue';
 import { Project, ProjectImpl } from '../models/project';
 import { CursorDataProvider } from '../data/cursorDataProvider';
 import { StorageManager } from '../data/storageManager';
+import { TagManager } from './tagManager';
 import { WorkspaceData, Prompt, ChatData, isPrompt, isNumericKeyObject, isChatData } from '../types/cursor';
 
 // Debug gate
@@ -14,14 +15,27 @@ export class ChatProcessor {
   private static instance: ChatProcessor;
   private cursorDataProvider: CursorDataProvider;
   private storageManager: StorageManager;
+  private tagManager: TagManager;
 
   private constructor() {
     this.cursorDataProvider = CursorDataProvider.getInstance();
     this.storageManager = StorageManager.getInstance();
+    this.tagManager = TagManager.getInstance();
   }
 
   // ①  ───────────────────────────────────
   // Add helper just below class fields
+  
+  /**
+   * Restore tags for a dialogue from TagManager
+   */
+  private restoreDialogueTags(dialogue: DialogueImpl): void {
+    const existingTags = this.tagManager.getDialogueTags(dialogue.id);
+    if (existingTags && existingTags.length > 0) {
+      existingTags.forEach(tag => dialogue.addTag(tag));
+      console.log(`ChatProcessor: Restored ${existingTags.length} tags for dialogue ${dialogue.id}`);
+    }
+  }
   private isNumericKeyObject(obj: any): boolean {
     return isNumericKeyObject(obj);
   }
@@ -393,11 +407,28 @@ export class ChatProcessor {
 
 
         // Task 4: Improve project naming - prioritize workspaceName from rich chat data
-        const folderName = require('path').basename(item.folderName ?? item.databasePath ?? '');
+        const folderPath = item.folderName ?? item.databasePath ?? '';
+        const folderName = require('path').basename(folderPath);
+        
+        // Try to extract workspace name from parent directory if folder is a hash
+        let betterFolderName = folderName;
+        if (folderName.match(/^[a-f0-9]{32}$/)) {
+          // Get parent directory name as it might be the actual project name
+          const parentDir = require('path').dirname(folderPath);
+          const parentName = require('path').basename(parentDir);
+          // Use parent name if it's not also a hash and not a system directory
+          if (parentName && !parentName.match(/^[a-f0-9]{32}$/) && 
+              !['Cursor', 'User', 'Code', 'AppData', 'Application Support'].includes(parentName)) {
+            betterFolderName = parentName;
+          } else {
+            betterFolderName = `Workspace ${folderName.slice(0,8)}`;
+          }
+        }
+        
         const baseProjectName =
               actualChatData.workspaceName
            || item.workspaceRealName
-           || (folderName.match(/^[a-f0-9]{32}$/) ? `Workspace ${folderName.slice(0,8)}` : folderName)
+           || betterFolderName
            || extractedWorkspaceName
            || item.workspace
            || 'Unknown Project';
@@ -438,6 +469,13 @@ export class ChatProcessor {
           [],
           []
         );
+
+        // Restore tags for this chat from TagManager
+        const existingChatTags = this.tagManager.getChatTags(chatId);
+        if (existingChatTags && existingChatTags.length > 0) {
+          existingChatTags.forEach(tag => chat.addTag(tag));
+          console.log(`ChatProcessor: Restored ${existingChatTags.length} tags for chat "${chatTitle}"`);
+        }
 
         // Process dialogues with enhanced handling
         this.processMessagesFromChatData(actualChatData, chat);
@@ -635,6 +673,7 @@ export class ChatProcessor {
           message.role === 'user', // isUser flag
           new Date(message.timestamp)
         );
+        this.restoreDialogueTags(dialogue);
         chat.addDialogue(dialogue);
         messagesProcessed++;
       }
@@ -728,6 +767,7 @@ export class ChatProcessor {
           new Date(normalized.ts)
         );
 
+        this.restoreDialogueTags(dialogue);
         chat.addDialogue(dialogue);
         messagesProcessed++;
 
@@ -841,6 +881,7 @@ export class ChatProcessor {
               []
             );
             
+            this.restoreDialogueTags(dialogue);
             chat.addDialogue(dialogue);
           }
         }

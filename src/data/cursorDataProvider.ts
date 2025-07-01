@@ -214,20 +214,37 @@ export class CursorDataProvider {
    */
   private async extractWorkspaceRealName(dbService: DatabaseService): Promise<string | null> {
     try {
-      const results = await dbService.executeQuery(
-        'SELECT value FROM ItemTable WHERE key = ?',
-        ['workspace.rootUri']
-      );
+      // Try multiple keys that might contain workspace information
+      const workspaceKeys = [
+        'workspace.rootUri',
+        'workbench.workspace.folder',
+        'workspace.name',
+        'workspace.displayName'
+      ];
 
-      if (results.length > 0 && results[0].value) {
-        const rootUri = results[0].value;
-        // Parse file:///c%3A/Users/.../MyCoolProject format
-        if (typeof rootUri === 'string' && rootUri.startsWith('file://')) {
-          const decodedPath = decodeURIComponent(rootUri.replace('file://', ''));
-          const pathParts = decodedPath.split(/[/\\]/);
-          const projectName = pathParts[pathParts.length - 1];
-          if (projectName && projectName.length > 0) {
-            return projectName;
+      for (const key of workspaceKeys) {
+        const results = await dbService.executeQuery(
+          'SELECT value FROM ItemTable WHERE key = ?',
+          [key]
+        );
+
+        if (results.length > 0 && results[0].value) {
+          const value = results[0].value;
+          
+          // Handle file:// URIs
+          if (typeof value === 'string' && value.startsWith('file://')) {
+            const decodedPath = decodeURIComponent(value.replace('file://', ''));
+            // Handle Windows paths that might start with /C:/ or /c:/
+            const normalizedPath = decodedPath.replace(/^\/([a-zA-Z]):/, '$1:');
+            const pathParts = normalizedPath.split(/[/\\]/);
+            const projectName = pathParts[pathParts.length - 1];
+            if (projectName && projectName.length > 0 && !projectName.match(/^[a-f0-9]{32}$/)) {
+              return projectName;
+            }
+          }
+          // Handle direct string values (workspace.name or workspace.displayName)
+          else if (typeof value === 'string' && value.length > 0 && !value.match(/^[a-f0-9]{32}$/)) {
+            return value;
           }
         }
       }
