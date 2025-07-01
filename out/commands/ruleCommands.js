@@ -38,11 +38,13 @@ const vscode = __importStar(require("vscode"));
 const path = __importStar(require("path"));
 const ruleManager_1 = require("../services/ruleManager");
 const projectOrganizer_1 = require("../services/projectOrganizer");
+const logger_1 = require("../utils/logger");
+const constants_1 = require("../config/constants");
 function registerRuleCommands(context, ruleView) {
-    console.log('Cursor Chat Manager: Registering rule commands...');
+    logger_1.logger.info(constants_1.LOG_COMPONENTS.EXTENSION, 'Registering rule commands...');
     const ruleManager = ruleManager_1.RuleManager.getInstance();
     // Import rule command
-    console.log('Cursor Chat Manager: Registering importRule command...');
+    logger_1.logger.debug(constants_1.LOG_COMPONENTS.EXTENSION, 'Registering importRule command...');
     const importRuleCommand = vscode.commands.registerCommand('cursor-chat-manager.importRule', async () => {
         try {
             // Show file picker for .mdc files
@@ -299,6 +301,6 @@ function registerRuleCommands(context, ruleView) {
     });
     // Register commands
     context.subscriptions.push(importRuleCommand, makeRuleGlobalCommand, applyRuleCommand, exportRuleCommand, deleteRuleCommand, createRuleFromSelectionCommand, refreshLocalRulesCommand);
-    console.log('Cursor Chat Manager: Rule commands registered successfully, including importRule');
+    logger_1.logger.info(constants_1.LOG_COMPONENTS.EXTENSION, 'Rule commands registered successfully, including importRule');
 }
 //# sourceMappingURL=ruleCommands.js.map

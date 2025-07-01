@@ -43,9 +43,11 @@ const path = __importStar(require("path"));
 const os = __importStar(require("os"));
 const databaseService_1 = require("./databaseService");
 const cursor_1 = require("../types/cursor");
+const logger_1 = require("../utils/logger");
+const constants_1 = require("../config/constants");
 // Debug gate
 exports.DEBUG = process.env.CURSOR_DEBUG === '1';
-const dbg = (...a) => exports.DEBUG && console.log('[CDP]', ...a);
+const dbg = (...a) => exports.DEBUG && logger_1.logger.debug(constants_1.LOG_COMPONENTS.DATA_PROVIDER, a.join(' '));
 class CursorDataProvider {
     constructor() {
         this.storagePath = '';
@@ -53,7 +55,7 @@ class CursorDataProvider {
         this.databaseService = new databaseService_1.DatabaseService();
         this.initializeStoragePath();
         // Log startup info - NO MOCK DATA
-        console.log('CursorDataProvider: Initialized - Mock data generation DISABLED');
+        logger_1.logger.info(constants_1.LOG_COMPONENTS.DATA_PROVIDER, 'Initialized - Mock data generation DISABLED');
     }
     static getInstance() {
         if (!CursorDataProvider.instance) {
@@ -79,12 +81,12 @@ class CursorDataProvider {
             }
         }
         if (!this.storagePath) {
-            console.warn('CursorDataProvider: No Cursor workspace storage found');
+            logger_1.logger.warn(constants_1.LOG_COMPONENTS.DATA_PROVIDER, 'No Cursor workspace storage found');
         }
     }
     async findWorkspaceStorageFolders() {
         if (!this.storagePath || !fs.existsSync(this.storagePath)) {
-            console.log('CursorDataProvider: No valid storage path found');
+            logger_1.logger.debug(constants_1.LOG_COMPONENTS.DATA_PROVIDER, 'No valid storage path found');
             return [];
         }
         try {
@@ -106,7 +108,7 @@ class CursorDataProvider {
             return folders;
         }
         catch (error) {
-            console.error(`Error reading storage directory: ${error}`);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.DATA_PROVIDER, 'Error reading storage directory', error);
             return [];
         }
     }
@@ -114,14 +116,14 @@ class CursorDataProvider {
      * Get all chat data from Cursor databases - NO MOCK DATA EVER
      */
     async getChatData() {
-        console.log('CursorDataProvider: Starting REAL chat data retrieval - NO MOCK DATA');
+        logger_1.logger.info(constants_1.LOG_COMPONENTS.DATA_PROVIDER, 'Starting REAL chat data retrieval - NO MOCK DATA');
         try {
             const workspaceFolders = await this.findWorkspaceStorageFolders();
             const allChatData = [];
             let totalDatabasesProcessed = 0;
             dbg(`Found ${workspaceFolders.length} workspace folders to process`);
             if (workspaceFolders.length === 0) {
-                console.warn('CursorDataProvider: No workspace folders found - returning empty array (NO MOCK DATA)');
+                logger_1.logger.warn(constants_1.LOG_COMPONENTS.DATA_PROVIDER, 'No workspace folders found - returning empty array (NO MOCK DATA)');
                 return [];
             }
             for (const folderPath of workspaceFolders) {
@@ -161,7 +163,7 @@ class CursorDataProvider {
                                     const baseKey = result.key.replace(/\.chat[Dd]ata$/, '');
                                     processedKeys.add(`${baseKey}.prompts`);
                                     processedKeys.add(`aiService.prompts`);
-                                    console.log(`CursorDataProvider: Found rich chat data at ${result.key}, skipping related prompts-only data`);
+                                    logger_1.logger.debug(constants_1.LOG_COMPONENTS.DATA_PROVIDER, `Found rich chat data at ${result.key}, skipping related prompts-only data`);
                                 }
                                 else if (!processedKeys.has(result.key)) {
                                     // This is prompts-only data, include it only if no rich version exists
@@ -179,20 +181,20 @@ class CursorDataProvider {
                             }
                         }
                         catch (parseError) {
-                            console.log(`JSON parse error for key "${result.key}": ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+                            logger_1.logger.debug(constants_1.LOG_COMPONENTS.DATA_PROVIDER, `JSON parse error for key "${result.key}"`, parseError);
                         }
                     }
                     // Always close the connection
                     await this.databaseService.closeConnection();
                 }
                 catch (error) {
-                    console.error(`Error processing workspace folder ${folderPath}: ${error instanceof Error ? error.message : String(error)}`);
+                    logger_1.logger.error(constants_1.LOG_COMPONENTS.DATA_PROVIDER, `Error processing workspace folder ${folderPath}`, error);
                     // Ensure connection is closed even if there's an error
                     try {
                         await this.databaseService.closeConnection();
                     }
                     catch (closeError) {
-                        console.warn(`Warning: Could not close database connection: ${closeError}`);
+                        logger_1.logger.warn(constants_1.LOG_COMPONENTS.DATA_PROVIDER, 'Could not close database connection', closeError);
                     }
                 }
             }
@@ -201,7 +203,7 @@ class CursorDataProvider {
             return allChatData;
         }
         catch (error) {
-            console.error('CursorDataProvider: Error retrieving chat data:', error);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.DATA_PROVIDER, 'Error retrieving chat data', error);
             return []; // Return empty array, NO MOCK DATA
         }
     }
@@ -210,22 +212,37 @@ class CursorDataProvider {
      */
     async extractWorkspaceRealName(dbService) {
         try {
-            const results = await dbService.executeQuery('SELECT value FROM ItemTable WHERE key = ?', ['workspace.rootUri']);
-            if (results.length > 0 && results[0].value) {
-                const rootUri = results[0].value;
-                // Parse file:///c%3A/Users/.../MyCoolProject format
-                if (typeof rootUri === 'string' && rootUri.startsWith('file://')) {
-                    const decodedPath = decodeURIComponent(rootUri.replace('file://', ''));
-                    const pathParts = decodedPath.split(/[/\\]/);
-                    const projectName = pathParts[pathParts.length - 1];
-                    if (projectName && projectName.length > 0) {
-                        return projectName;
+            // Try multiple keys that might contain workspace information
+            const workspaceKeys = [
+                'workspace.rootUri',
+                'workbench.workspace.folder',
+                'workspace.name',
+                'workspace.displayName'
+            ];
+            for (const key of workspaceKeys) {
+                const results = await dbService.executeQuery('SELECT value FROM ItemTable WHERE key = ?', [key]);
+                if (results.length > 0 && results[0].value) {
+                    const value = results[0].value;
+                    // Handle file:// URIs
+                    if (typeof value === 'string' && value.startsWith('file://')) {
+                        const decodedPath = decodeURIComponent(value.replace('file://', ''));
+                        // Handle Windows paths that might start with /C:/ or /c:/
+                        const normalizedPath = decodedPath.replace(/^\/([a-zA-Z]):/, '$1:');
+                        const pathParts = normalizedPath.split(/[/\\]/);
+                        const projectName = pathParts[pathParts.length - 1];
+                        if (projectName && projectName.length > 0 && !projectName.match(/^[a-f0-9]{32}$/)) {
+                            return projectName;
+                        }
+                    }
+                    // Handle direct string values (workspace.name or workspace.displayName)
+                    else if (typeof value === 'string' && value.length > 0 && !value.match(/^[a-f0-9]{32}$/)) {
+                        return value;
                     }
                 }
             }
         }
         catch (error) {
-            console.warn('Failed to extract workspace real name:', error);
+            logger_1.logger.warn(constants_1.LOG_COMPONENTS.DATA_PROVIDER, 'Failed to extract workspace real name', error);
         }
         return null;
     }
@@ -277,7 +294,7 @@ class CursorDataProvider {
      * Get projects - based on real workspace databases only
      */
     async getProjects() {
-        console.log('CursorDataProvider: Getting projects from real workspace data...');
+        logger_1.logger.info(constants_1.LOG_COMPONENTS.DATA_PROVIDER, 'Getting projects from real workspace data...');
         const projects = [];
         try {
             const workspaceFolders = await this.findWorkspaceStorageFolders();
@@ -296,11 +313,11 @@ class CursorDataProvider {
                     projects.push(project);
                 }
             }
-            console.log(`CursorDataProvider: Found ${projects.length} real projects with chat data`);
+            logger_1.logger.info(constants_1.LOG_COMPONENTS.DATA_PROVIDER, `Found ${projects.length} real projects with chat data`);
             return projects;
         }
         catch (error) {
-            console.error('CursorDataProvider: Error getting projects:', error);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.DATA_PROVIDER, 'Error getting projects', error);
             return [];
         }
     }
@@ -328,13 +345,13 @@ class CursorDataProvider {
             await this.databaseService.closeConnection();
         }
         catch (error) {
-            console.error(`CursorDataProvider: Error extracting from database ${folderPath}:`, error);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.DATA_PROVIDER, `Error extracting from database ${folderPath}`, error);
             // Ensure connection is closed even if there's an error
             try {
                 await this.databaseService.closeConnection();
             }
             catch (closeError) {
-                console.warn(`Warning: Could not close database connection: ${closeError}`);
+                logger_1.logger.warn(constants_1.LOG_COMPONENTS.DATA_PROVIDER, 'Could not close database connection', closeError);
             }
         }
         return chatData;
@@ -343,14 +360,14 @@ class CursorDataProvider {
      * Clear any cached data and force refresh
      */
     clearCache() {
-        console.log('CursorDataProvider: Clearing cache...');
+        logger_1.logger.debug(constants_1.LOG_COMPONENTS.DATA_PROVIDER, 'Clearing cache...');
         this.workspaceStoragePaths = [];
     }
     /**
      * Get statistics about available data
      */
     async getDataStatistics() {
-        console.log('CursorDataProvider: Gathering real data statistics...');
+        logger_1.logger.debug(constants_1.LOG_COMPONENTS.DATA_PROVIDER, 'Gathering real data statistics...');
         try {
             const projects = await this.getProjects();
             const chatData = await this.getChatData();
@@ -363,7 +380,7 @@ class CursorDataProvider {
             };
         }
         catch (error) {
-            console.error('CursorDataProvider: Error getting statistics:', error);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.DATA_PROVIDER, 'Error getting statistics', error);
             return {
                 totalProjects: 0,
                 totalChats: 0,

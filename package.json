@@ -1,7 +1,7 @@
 {
   "name": "cursor-chat-manager",
   "displayName": "Cursor Chat Manager",
-  "description": "Enhanced management capabilities for chat history from Cursor IDE",
+  "description": "Enhanced management capabilities for chat history from Cursor IDE with smart tagging, workspace organization, and professional logging",
   "version": "0.0.1",
   "publisher": "cursor-chat-manager-dev",
   "engines": {
@@ -9,6 +9,16 @@
   },
   "categories": [
     "Other"
+  ],
+  "keywords": [
+    "cursor",
+    "chat",
+    "management",
+    "ai",
+    "tagging",
+    "organization",
+    "export",
+    "history"
   ],
   "main": "./out/extension.js",
   "contributes": {

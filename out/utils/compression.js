@@ -4,6 +4,8 @@ exports.maybeDecode = maybeDecode;
 exports.isCompressedKey = isCompressedKey;
 exports.decompressAndParse = decompressAndParse;
 const zlib_1 = require("zlib");
+const logger_1 = require("./logger");
+const constants_1 = require("../config/constants");
 /**
  * Utility functions for handling compressed data in Cursor storage
  * Many Cursor records store data as gzip+base64, especially keys ending in ':compressed'
@@ -19,7 +21,7 @@ function maybeDecode(value) {
         const buffer = Buffer.isBuffer(value) ? value : Buffer.from(value, 'base64');
         // Check for gzip magic bytes (0x1f 0x8b)
         if (buffer.length >= 2 && buffer[0] === 0x1f && buffer[1] === 0x8b) {
-            console.log('Compression: Detected gzip compressed data, decompressing...');
+            logger_1.logger.debug(constants_1.LOG_COMPONENTS.DATA_PROVIDER, 'Detected gzip compressed data, decompressing...');
             const decompressed = (0, zlib_1.gunzipSync)(buffer);
             return decompressed.toString('utf8');
         }
@@ -40,7 +42,7 @@ function maybeDecode(value) {
                 const decoded = Buffer.from(value, 'base64').toString('utf8');
                 // Validate it's valid JSON-like content
                 if (decoded.trim().match(/^[\{\[]/) && decoded.trim().match(/[\}\]]$/)) {
-                    console.log('Compression: Decoded base64 data successfully');
+                    logger_1.logger.debug(constants_1.LOG_COMPONENTS.DATA_PROVIDER, 'Decoded base64 data successfully');
                     return decoded;
                 }
             }
@@ -52,7 +54,7 @@ function maybeDecode(value) {
         return typeof value === 'string' ? value : value.toString('utf8');
     }
     catch (error) {
-        console.error('Compression: Error decoding value:', error);
+        logger_1.logger.error(constants_1.LOG_COMPONENTS.DATA_PROVIDER, 'Error decoding value', error);
         // Return original value as fallback
         return typeof value === 'string' ? value : value.toString();
     }
@@ -79,7 +81,7 @@ function decompressAndParse(value) {
         return JSON.parse(decoded);
     }
     catch (error) {
-        console.error('Compression: Failed to decompress and parse:', error);
+        logger_1.logger.error(constants_1.LOG_COMPONENTS.DATA_PROVIDER, 'Failed to decompress and parse', error);
         return null;
     }
 }

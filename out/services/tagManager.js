@@ -4,6 +4,8 @@ exports.TagManager = void 0;
 const chat_1 = require("../models/chat");
 const dialogue_1 = require("../models/dialogue");
 const storageManager_1 = require("../data/storageManager");
+const logger_1 = require("../utils/logger");
+const constants_1 = require("../config/constants");
 class TagManager {
     constructor() {
         this.chatTags = new Map();
@@ -38,7 +40,7 @@ class TagManager {
             });
         }
         catch (error) {
-            console.error(`Error initializing tag manager: ${error}`);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.TAG_MANAGER, 'Error initializing tag manager', error);
         }
     }
     async saveState() {
@@ -54,7 +56,7 @@ class TagManager {
             await this.storageManager.saveData('tagCategories', this.tagCategories);
         }
         catch (error) {
-            console.error(`Error saving tag manager state: ${error}`);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.TAG_MANAGER, 'Error saving tag manager state', error);
         }
     }
     // Chat-level tagging

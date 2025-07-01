@@ -6,6 +6,8 @@ const project_1 = require("../models/project");
 const chat_1 = require("../models/chat");
 const dialogue_1 = require("../models/dialogue");
 const storageManager_1 = require("../data/storageManager");
+const logger_1 = require("../utils/logger");
+const constants_1 = require("../config/constants");
 var OrganizationMode;
 (function (OrganizationMode) {
     OrganizationMode["COPY"] = "copy";
@@ -25,48 +27,47 @@ class ProjectOrganizer {
         return ProjectOrganizer.instance;
     }
     async initialize(projects) {
-        console.log(`ProjectOrganizer.initialize: Called with ${projects.length} projects`);
+        logger_1.logger.info(constants_1.LOG_COMPONENTS.PROJECT_ORGANIZER, `Initialize called with ${projects.length} projects`);
         this.projects = new Map();
         this.originalProjects = new Map();
         this.customProjects = new Map();
         // Log input projects for debugging
         projects.forEach((project, index) => {
-            console.log(`  - Input Project ${index}: "${project.name}" (ID: ${project.id}, isCustom: ${project.isCustom}) with ${project.chats.length} chats`);
+            logger_1.logger.debug(constants_1.LOG_COMPONENTS.PROJECT_ORGANIZER, `Input Project ${index}: "${project.name}" (ID: ${project.id}, isCustom: ${project.isCustom}) with ${project.chats.length} chats`);
         });
         // Load custom projects from storage
         const customProjectsData = await this.storageManager.getData('customProjects', []);
-        console.log(`ProjectOrganizer.initialize: Loaded ${(customProjectsData || []).length} custom projects from storage`);
+        logger_1.logger.info(constants_1.LOG_COMPONENTS.PROJECT_ORGANIZER, `Loaded ${(customProjectsData || []).length} custom projects from storage`);
         const customProjects = (customProjectsData || [])
             .map((p) => project_1.ProjectImpl.deserialize(p));
         // Add all projects to maps
         const allProjects = [...projects, ...customProjects];
-        console.log(`ProjectOrganizer.initialize: Processing ${allProjects.length} total projects (${projects.length} input + ${customProjects.length} stored)`);
+        logger_1.logger.info(constants_1.LOG_COMPONENTS.PROJECT_ORGANIZER, `Processing ${allProjects.length} total projects (${projects.length} input + ${customProjects.length} stored)`);
         for (const project of allProjects) {
             const projectImpl = project instanceof project_1.ProjectImpl ? project :
                 new project_1.ProjectImpl(project.id, project.name, project.description, project.created, project.isCustom, project.chats, project.tags, project.metadata);
-            console.log(`ProjectOrganizer.initialize: Adding project "${projectImpl.name}" (ID: ${projectImpl.id}, isCustom: ${projectImpl.isCustom}) with ${projectImpl.chats.length} chats`);
+            logger_1.logger.debug(constants_1.LOG_COMPONENTS.PROJECT_ORGANIZER, `Adding project "${projectImpl.name}" (ID: ${projectImpl.id}, isCustom: ${projectImpl.isCustom}) with ${projectImpl.chats.length} chats`);
             this.projects.set(projectImpl.id, projectImpl);
             if (projectImpl.isCustom) {
                 this.customProjects.set(projectImpl.id, projectImpl);
-                console.log(`  - Added to customProjects map`);
+                logger_1.logger.debug(constants_1.LOG_COMPONENTS.PROJECT_ORGANIZER, 'Added to customProjects map');
             }
             else {
                 this.originalProjects.set(projectImpl.id, projectImpl);
-                console.log(`  - Added to originalProjects map`);
+                logger_1.logger.debug(constants_1.LOG_COMPONENTS.PROJECT_ORGANIZER, 'Added to originalProjects map');
             }
         }
-        console.log(`ProjectOrganizer.initialize: Final state:`);
-        console.log(`  - Total projects: ${this.projects.size}`);
-        console.log(`  - Original projects: ${this.originalProjects.size}`);
-        console.log(`  - Custom projects: ${this.customProjects.size}`);
+        logger_1.logger.info(constants_1.LOG_COMPONENTS.PROJECT_ORGANIZER, `Final state: Total projects: ${this.projects.size}, Original projects: ${this.originalProjects.size}, Custom projects: ${this.customProjects.size}`);
         // Log detailed breakdown
-        console.log(`ProjectOrganizer.initialize: Original projects breakdown:`);
-        Array.from(this.originalProjects.values()).forEach((project, index) => {
-            console.log(`    ${index}: "${project.name}" (${project.chats.length} chats)`);
+        logger_1.logger.group(constants_1.LOG_COMPONENTS.PROJECT_ORGANIZER, 'Original projects breakdown', () => {
+            Array.from(this.originalProjects.values()).forEach((project, index) => {
+                logger_1.logger.debug(constants_1.LOG_COMPONENTS.PROJECT_ORGANIZER, `${index}: "${project.name}" (${project.chats.length} chats)`);
+            });
         });
-        console.log(`ProjectOrganizer.initialize: Custom projects breakdown:`);
-        Array.from(this.customProjects.values()).forEach((project, index) => {
-            console.log(`    ${index}: "${project.name}" (${project.chats.length} chats)`);
+        logger_1.logger.group(constants_1.LOG_COMPONENTS.PROJECT_ORGANIZER, 'Custom projects breakdown', () => {
+            Array.from(this.customProjects.values()).forEach((project, index) => {
+                logger_1.logger.debug(constants_1.LOG_COMPONENTS.PROJECT_ORGANIZER, `${index}: "${project.name}" (${project.chats.length} chats)`);
+            });
         });
     }
     async saveState() {
@@ -76,7 +77,7 @@ class ProjectOrganizer {
             await this.storageManager.saveData('customProjects', customProjectsArray.map(p => p.serialize()));
         }
         catch (error) {
-            console.error(`Error saving project organizer state: ${error}`);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.PROJECT_ORGANIZER, 'Error saving project organizer state', error);
         }
     }
     async createCustomProject(name, description, tags = []) {

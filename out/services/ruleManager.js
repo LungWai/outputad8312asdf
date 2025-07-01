@@ -39,6 +39,8 @@ const fs = __importStar(require("fs/promises"));
 const path = __importStar(require("path"));
 const rule_1 = require("../models/rule");
 const storageManager_1 = require("../data/storageManager");
+const logger_1 = require("../utils/logger");
+const constants_1 = require("../config/constants");
 class RuleManager {
     constructor() {
         this.globalRules = [];
@@ -75,7 +77,7 @@ class RuleManager {
             this.initialized = true;
         }
         catch (error) {
-            console.error('Failed to initialize rule manager:', error);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.RULE_MANAGER, 'Failed to initialize rule manager', error);
             throw new Error(`Rule manager initialization failed: ${error}`);
         }
     }
@@ -138,7 +140,7 @@ class RuleManager {
             return rule;
         }
         catch (error) {
-            console.error('Failed to import rule from file:', error);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.RULE_MANAGER, 'Failed to import rule from file', error);
             throw new Error(`Rule import failed: ${error}`);
         }
     }
@@ -182,7 +184,7 @@ class RuleManager {
             await this.storageManager.saveData('projectRules', projectRulesObj);
         }
         catch (error) {
-            console.error(`Error saving rule manager state: ${error}`);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.RULE_MANAGER, 'Error saving rule manager state', error);
         }
     }
     /**
@@ -332,7 +334,7 @@ class RuleManager {
             }
         }
         catch (error) {
-            console.error('Error importing local rules:', error);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.RULE_MANAGER, 'Error importing local rules', error);
         }
     }
     /**
@@ -357,11 +359,11 @@ class RuleManager {
                                 autoImported: true
                             };
                             this.globalRules.push(rule);
-                            console.log(`Auto-imported local rule: ${rule.name} from ${filePath}`);
+                            logger_1.logger.info(constants_1.LOG_COMPONENTS.RULE_MANAGER, `Auto-imported local rule: ${rule.name} from ${filePath}`);
                         }
                     }
                     catch (error) {
-                        console.error(`Error importing rule from ${filePath}:`, error);
+                        logger_1.logger.error(constants_1.LOG_COMPONENTS.RULE_MANAGER, `Error importing rule from ${filePath}`, error);
                     }
                 }
             }
@@ -371,7 +373,7 @@ class RuleManager {
             this.notifyRulesUpdated();
         }
         catch (error) {
-            console.error(`Error scanning directory ${directoryPath}:`, error);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.RULE_MANAGER, `Error scanning directory ${directoryPath}`, error);
         }
     }
     /**

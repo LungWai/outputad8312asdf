@@ -36,6 +36,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.DatabaseInspector = void 0;
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
+const logger_1 = require("./logger");
+const constants_1 = require("../config/constants");
 /**
  * Database Inspector utility to examine SQLite database structure
  * This helps us understand the actual structure of Cursor's state.vscdb files
@@ -46,7 +48,7 @@ class DatabaseInspector {
      */
     static async inspectDatabase(dbPath) {
         try {
-            console.log(`DatabaseInspector: Inspecting database at ${dbPath}`);
+            logger_1.logger.info(constants_1.LOG_COMPONENTS.DATABASE, `Inspecting database at ${dbPath}`);
             // Check if file exists
             if (!fs.existsSync(dbPath)) {
                 throw new Error(`Database file does not exist: ${dbPath}`);
@@ -54,12 +56,12 @@ class DatabaseInspector {
             // For now, let's try to read the file as text to see if we can find any patterns
             const fileBuffer = fs.readFileSync(dbPath);
             const fileSize = fileBuffer.length;
-            console.log(`DatabaseInspector: File size: ${fileSize} bytes`);
+            logger_1.logger.debug(constants_1.LOG_COMPONENTS.DATABASE, `File size: ${fileSize} bytes`);
             // Try to find text patterns that might indicate table names or data
             const fileText = fileBuffer.toString('utf8', 0, Math.min(10000, fileSize));
             // Look for common SQLite patterns
             const sqliteHeader = fileBuffer.toString('ascii', 0, 16);
-            console.log(`DatabaseInspector: SQLite header: ${sqliteHeader}`);
+            logger_1.logger.debug(constants_1.LOG_COMPONENTS.DATABASE, `SQLite header: ${sqliteHeader}`);
             // Look for potential table names or chat-related keywords
             const chatKeywords = [
                 'chat', 'message', 'conversation', 'ai', 'cursor', 'prompt',
@@ -71,13 +73,13 @@ class DatabaseInspector {
                     foundKeywords.push(keyword);
                 }
             });
-            console.log(`DatabaseInspector: Found keywords: ${foundKeywords.join(', ')}`);
+            logger_1.logger.debug(constants_1.LOG_COMPONENTS.DATABASE, `Found keywords: ${foundKeywords.join(', ')}`);
             // Try to extract potential JSON data
             const jsonMatches = fileText.match(/\{[^{}]*"[^"]*"[^{}]*\}/g);
             if (jsonMatches) {
-                console.log(`DatabaseInspector: Found ${jsonMatches.length} potential JSON objects`);
+                logger_1.logger.debug(constants_1.LOG_COMPONENTS.DATABASE, `Found ${jsonMatches.length} potential JSON objects`);
                 jsonMatches.slice(0, 3).forEach((match, index) => {
-                    console.log(`DatabaseInspector: JSON sample ${index + 1}: ${match.substring(0, 200)}...`);
+                    logger_1.logger.debug(constants_1.LOG_COMPONENTS.DATABASE, `JSON sample ${index + 1}: ${match.substring(0, 200)}...`);
                 });
             }
             return {
@@ -89,7 +91,7 @@ class DatabaseInspector {
             };
         }
         catch (error) {
-            console.error(`DatabaseInspector: Error inspecting database ${dbPath}:`, error);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.DATABASE, `Error inspecting database ${dbPath}`, error);
             throw error;
         }
     }
@@ -102,16 +104,16 @@ class DatabaseInspector {
             // Get Cursor storage path
             const os = require('os');
             const cursorStoragePath = path.join(os.homedir(), 'AppData', 'Roaming', 'Cursor', 'User', 'workspaceStorage');
-            console.log(`DatabaseInspector: Scanning ${cursorStoragePath}`);
+            logger_1.logger.info(constants_1.LOG_COMPONENTS.DATABASE, `Scanning ${cursorStoragePath}`);
             if (!fs.existsSync(cursorStoragePath)) {
                 throw new Error(`Cursor storage path does not exist: ${cursorStoragePath}`);
             }
             const workspaceFolders = fs.readdirSync(cursorStoragePath);
-            console.log(`DatabaseInspector: Found ${workspaceFolders.length} workspace folders`);
+            logger_1.logger.info(constants_1.LOG_COMPONENTS.DATABASE, `Found ${workspaceFolders.length} workspace folders`);
             for (const folder of workspaceFolders.slice(0, 5)) { // Limit to first 5 for performance
                 const dbPath = path.join(cursorStoragePath, folder, 'state.vscdb');
                 if (fs.existsSync(dbPath)) {
-                    console.log(`DatabaseInspector: Inspecting ${folder}`);
+                    logger_1.logger.debug(constants_1.LOG_COMPONENTS.DATABASE, `Inspecting ${folder}`);
                     try {
                         const inspection = await this.inspectDatabase(dbPath);
                         results.push({
@@ -120,13 +122,13 @@ class DatabaseInspector {
                         });
                     }
                     catch (error) {
-                        console.error(`DatabaseInspector: Failed to inspect ${folder}:`, error);
+                        logger_1.logger.error(constants_1.LOG_COMPONENTS.DATABASE, `Failed to inspect ${folder}`, error);
                     }
                 }
             }
         }
         catch (error) {
-            console.error('DatabaseInspector: Error scanning workspace storages:', error);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.DATABASE, 'Error scanning workspace storages', error);
         }
         return results;
     }

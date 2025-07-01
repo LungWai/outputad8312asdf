@@ -37,6 +37,8 @@ exports.ExportService = exports.ExportFormat = void 0;
 const vscode = __importStar(require("vscode"));
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
+const logger_1 = require("../utils/logger");
+const constants_1 = require("../config/constants");
 var ExportFormat;
 (function (ExportFormat) {
     ExportFormat["JSON"] = "json";
@@ -283,7 +285,7 @@ class ExportService {
         }
         catch (error) {
             // If template doesn't exist, return a basic fallback template
-            console.error(`Failed to load template ${templateName}: ${error}`);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.EXPORT_SERVICE, `Failed to load template ${templateName}`, error);
             if (templateName === 'chat.html') {
                 return this.getFallbackChatTemplate();
             }
@@ -377,7 +379,7 @@ class ExportService {
             await fs.promises.writeFile(filePath, content, 'utf-8');
         }
         catch (error) {
-            console.error(`Error writing to file ${filePath}:`, error);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.EXPORT_SERVICE, `Error writing to file ${filePath}`, error);
             throw error;
         }
     }

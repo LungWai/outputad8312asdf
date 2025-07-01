@@ -37,6 +37,8 @@ exports.RuleImpl = void 0;
 const fs = __importStar(require("fs/promises"));
 const path = __importStar(require("path"));
 const yaml = __importStar(require("yaml"));
+const logger_1 = require("../utils/logger");
+const constants_1 = require("../config/constants");
 class RuleImpl {
     constructor(id, name, description, content, isGlobal = false, tags = [], frontmatter = {}, appliedProjects = []) {
         this.id = id;
@@ -78,7 +80,7 @@ class RuleImpl {
             return true;
         }
         catch (error) {
-            console.error(`Error exporting rule to file: ${error}`);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.RULE_MANAGER, 'Error exporting rule to file', error);
             return false;
         }
     }
@@ -114,7 +116,7 @@ class RuleImpl {
             }
         }
         catch (error) {
-            console.error(`Error reading MDC file: ${error}`);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.RULE_MANAGER, 'Error reading MDC file', error);
             throw new Error(`Failed to parse MDC file: ${error}`);
         }
     }

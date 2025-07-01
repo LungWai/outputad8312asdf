@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StorageManager = void 0;
+const logger_1 = require("../utils/logger");
+const constants_1 = require("../config/constants");
 class StorageManager {
     constructor() {
         this.context = null;
@@ -28,7 +30,7 @@ class StorageManager {
             return true;
         }
         catch (error) {
-            console.error(`Error saving data: ${error}`);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.STORAGE_MANAGER, 'Error saving data', error);
             return false;
         }
     }
@@ -46,7 +48,7 @@ class StorageManager {
             return migratedData.data;
         }
         catch (error) {
-            console.error(`Error retrieving data: ${error}`);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.STORAGE_MANAGER, 'Error retrieving data', error);
             return defaultValue;
         }
     }
@@ -59,7 +61,7 @@ class StorageManager {
             return true;
         }
         catch (error) {
-            console.error(`Error removing data: ${error}`);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.STORAGE_MANAGER, 'Error removing data', error);
             return false;
         }
     }
@@ -79,7 +81,7 @@ class StorageManager {
             return keys;
         }
         catch (error) {
-            console.error(`Error getting keys: ${error}`);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.STORAGE_MANAGER, 'Error getting keys', error);
             return [];
         }
     }
@@ -90,7 +92,7 @@ class StorageManager {
         }
         // Handle migrations between different versions
         // For future use as new versions are introduced
-        console.log(`Migrating data from version ${storageData.version} to ${StorageManager.CURRENT_VERSION}`);
+        logger_1.logger.info(constants_1.LOG_COMPONENTS.STORAGE_MANAGER, `Migrating data from version ${storageData.version} to ${StorageManager.CURRENT_VERSION}`);
         // For now, just update the version
         return {
             ...storageData,

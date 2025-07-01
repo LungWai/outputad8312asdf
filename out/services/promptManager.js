@@ -37,6 +37,8 @@ exports.PromptManager = void 0;
 const vscode = __importStar(require("vscode"));
 const prompt_1 = require("../models/prompt");
 const storageManager_1 = require("../data/storageManager");
+const logger_1 = require("../utils/logger");
+const constants_1 = require("../config/constants");
 class PromptManager {
     constructor() {
         this.prompts = new Map();
@@ -78,7 +80,7 @@ class PromptManager {
             this.initialized = true;
         }
         catch (error) {
-            console.error('Failed to initialize prompt manager:', error);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.PROMPT_MANAGER, 'Failed to initialize prompt manager', error);
             throw new Error(`Prompt manager initialization failed: ${error}`);
         }
     }
@@ -267,7 +269,7 @@ class PromptManager {
             await this.storageManager.saveData('promptCategories', Array.from(this.categories));
         }
         catch (error) {
-            console.error(`Error saving prompt manager state: ${error}`);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.PROMPT_MANAGER, 'Error saving prompt manager state', error);
         }
     }
     /**
@@ -290,7 +292,7 @@ class PromptManager {
             return true;
         }
         catch (error) {
-            console.error('Failed to export prompts:', error);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.PROMPT_MANAGER, 'Failed to export prompts', error);
             return false;
         }
     }
@@ -318,7 +320,7 @@ class PromptManager {
                     importedCount++;
                 }
                 catch (err) {
-                    console.error('Error importing prompt:', err);
+                    logger_1.logger.error(constants_1.LOG_COMPONENTS.PROMPT_MANAGER, 'Error importing prompt', err);
                 }
             }
             if (importedCount > 0) {
@@ -327,7 +329,7 @@ class PromptManager {
             return importedCount;
         }
         catch (error) {
-            console.error('Failed to import prompts:', error);
+            logger_1.logger.error(constants_1.LOG_COMPONENTS.PROMPT_MANAGER, 'Failed to import prompts', error);
             throw new Error(`Prompt import failed: ${error}`);
         }
     }
