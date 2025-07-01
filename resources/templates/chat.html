@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{CHAT_TITLE}}</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+
+    h1 {
+      color: #0078d4;
+      border-bottom: 1px solid #e0e0e0;
+      padding-bottom: 10px;
+    }
+
+    .metadata {
+      background: #f0f0f0;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      border-left: 4px solid #0078d4;
+      font-size: 14px;
+    }
+
+    .metadata-item {
+      margin-bottom: 8px;
+    }
+
+    .tag {
+      background: #e0e0e0;
+      color: #333;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+      margin-right: 5px;
+      display: inline-block;
+    }
+
+    .dialogues {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .dialogue {
+      margin-bottom: 2px;
+      padding: 15px;
+    }
+
+    .user {
+      background: #e7f3ff;
+      border-left: 4px solid #0078d4;
+    }
+
+    .assistant {
+      background: #f5faff;
+      border-left: 4px solid #28a745;
+    }
+
+    .dialogue-header {
+      display: flex;
+      margin-bottom: 10px;
+      font-size: 14px;
+      color: #666;
+      align-items: center;
+    }
+
+    .role {
+      font-weight: bold;
+      margin-right: 15px;
+      text-transform: uppercase;
+      color: #0078d4;
+    }
+
+    .assistant .role {
+      color: #28a745;
+    }
+
+    .timestamp {
+      margin-right: 15px;
+      color: #888;
+    }
+
+    .tags {
+      flex-grow: 1;
+      text-align: right;
+    }
+
+    .dialogue-content {
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+
+    .code-block {
+      background: #f6f8fa;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      margin: 15px 0;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+      font-size: 14px;
+      border: 1px solid #e8e8e8;
+    }
+
+    a {
+      color: #0078d4;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #1e1e1e;
+        color: #e0e0e0;
+      }
+      
+      h1 {
+        color: #3794ff;
+        border-bottom-color: #3a3a3a;
+      }
+      
+      .metadata {
+        background: #252525;
+        border-left-color: #3794ff;
+      }
+      
+      .tag {
+        background: #333;
+        color: #e0e0e0;
+      }
+      
+      .dialogues {
+        background: #252525;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+      
+      .user {
+        background: #103151;
+        border-left-color: #3794ff;
+      }
+      
+      .assistant {
+        background: #0d2b0d;
+        border-left-color: #28a745;
+      }
+      
+      .role {
+        color: #3794ff;
+      }
+      
+      .assistant .role {
+        color: #3fb950;
+      }
+      
+      .code-block {
+        background: #2a2a2a;
+        border-color: #3a3a3a;
+      }
+      
+      a {
+        color: #3794ff;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>{{CHAT_TITLE}}</h1>
+  {{METADATA}}
+  <div class="dialogues">
+    {{DIALOGUES}}
+  </div>
+</body>
+</html> 

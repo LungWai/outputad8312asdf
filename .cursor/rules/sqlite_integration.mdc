@@ -1,0 +1,75 @@
+---
+description: SQLite Integration Guidelines, data assess
+globs: 
+alwaysApply: false
+---
+# SQLite Integration Guidelines
+
+## Overview
+This rule provides guidance for working with SQLite databases in the Cursor Chat Manager extension.
+
+## Recommended Libraries
+- **better-sqlite3**: Preferred for synchronous operations with better performance
+- **sqlite3**: Alternative for asynchronous operations when needed
+
+## Database Connection
+1. Implement connection pooling for better performance
+2. Handle connection errors with proper retries and timeouts
+3. Always close connections after use
+4. Use parameterized queries to prevent SQL injection
+
+## Query Implementation
+- See [databaseService.ts](mdc:src/data/databaseService.ts) for implementation
+- Use prepared statements for frequently executed queries
+- Implement proper transaction handling for related operations
+- Use proper indexing for frequently queried columns
+
+## Example Implementations
+
+### Connection Logic
+```typescript
+// Example connection logic
+function openConnection(dbPath: string): Database {
+  try {
+    const db = new Database(dbPath, { readonly: true });
+    return db;
+  } catch (error) {
+    logger.error(`Failed to connect to database at ${dbPath}`, error);
+    throw new DatabaseConnectionError(`Could not connect to database: ${error.message}`);
+  }
+}
+```
+
+### Query Execution
+```typescript
+// Example query execution with parameters
+function executeQuery(db: Database, query: string, params: any[]): any[] {
+  try {
+    const statement = db.prepare(query);
+    return statement.all(...params);
+  } catch (error) {
+    logger.error(`Failed to execute query: ${query}`, error);
+    throw new QueryExecutionError(`Query execution failed: ${error.message}`);
+  }
+}
+```
+
+## Error Handling
+1. Implement specific error types for database operations
+2. Log detailed error information for debugging
+3. Implement retry mechanisms for transient errors
+4. Provide user-friendly error messages
+
+## Performance Optimization
+1. Use indices for frequently queried columns
+2. Minimize the amount of data returned in queries
+3. Use transactions for batch operations
+4. Implement proper caching for frequent queries
+5. Use pagination for large result sets
+
+## Security Considerations
+1. Always use parameterized queries
+2. Limit database permissions when possible
+3. Validate all user input before using in queries
+4. Do not expose raw database errors to users
+

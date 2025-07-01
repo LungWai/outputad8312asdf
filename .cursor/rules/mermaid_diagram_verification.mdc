@@ -1,0 +1,88 @@
+---
+description: Mermaid Diagram Verification
+globs: 
+alwaysApply: false
+---
+# Mermaid Diagram Verification Guidelines
+
+## Overview
+This rule provides guidance for verifying and maintaining consistency between the implementation and the Mermaid diagrams in the documentation.
+
+## System Architecture Diagram Verification
+The system architecture diagram in [01_overview.md](mdc:documents/01_overview.md) should accurately reflect:
+
+1. The three-layer architecture (UI, Services, Data Access)
+2. The correct components in each layer
+3. The proper relationships between components
+4. The external dependencies and interactions
+
+Key verification points:
+- UI components connect to appropriate services
+- Services connect to appropriate data access components
+- Data flows match implementation
+- All components described in code exist in diagram
+
+## Data Access Flow Verification
+The data access flow diagrams in [02_data_access.md](mdc:documents/02_data_access.md) should accurately reflect:
+
+1. The interaction between components
+2. The sequence of operations
+3. The error handling paths
+4. The data transformation steps
+
+Key verification points:
+- File paths match the implemented OS detection logic
+- Database queries match the actual SQL used
+- Error handling matches implementation
+- Data parsing matches actual transformation logic
+
+## Data Model Verification
+The class diagrams in [03_data_models.md](mdc:documents/03_data_models.md) should accurately reflect:
+
+1. All properties and methods of classes/interfaces
+2. The relationships between models
+3. The cardinality of relationships
+4. The inheritance hierarchy
+
+Key verification points:
+- All properties in interfaces exist in diagram
+- All methods in interfaces exist in diagram
+- Relationships match implementation
+- Multiplicity matches implementation
+
+## Service Flow Verification
+The sequence diagrams in [04_services.md](mdc:documents/04_services.md) should accurately reflect:
+
+1. The component interactions
+2. The sequence of method calls
+3. The data passed between components
+4. The error handling paths
+
+Key verification points:
+- Sequence of operations matches implementation
+- Message parameters match actual method signatures
+- Error paths are represented
+- Alternative flows are represented
+
+## Operational Workflow Verification
+The workflow diagrams in [07_operational_flows.md](mdc:documents/07_operational_flows.md) should accurately reflect:
+
+1. The user interaction flows
+2. The component interactions
+3. The data transformations
+4. The error handling paths
+
+Key verification points:
+- User interactions match implemented UI
+- Component interactions match actual code
+- Data flows match implementation
+- Error handling matches implementation
+
+## Implementation Consistency
+Ensure that:
+
+1. All components in diagrams exist in the code
+2. All major code components are represented in diagrams
+3. Relationships in diagrams match code dependencies
+4. Data flows in diagrams match actual data flows in code
+

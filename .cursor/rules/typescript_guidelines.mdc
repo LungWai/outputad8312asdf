@@ -1,0 +1,43 @@
+---
+description: 
+globs: .tsx,.ts
+alwaysApply: false
+---
+# TypeScript Development Guidelines
+
+## Overview
+This rule establishes TypeScript best practices for the Cursor Chat Manager extension.
+
+## TypeScript Configuration
+- Use `tsconfig.json` with strict type checking enabled
+- Target ES2020 or newer for modern language features
+- Enable source maps for debugging
+- Use module resolution "node" for compatibility
+
+## Type Definitions
+- Define interfaces for all data models:
+  - [chat.ts](mdc:src/models/chat.ts) - Chat data structure
+  - [dialogue.ts](mdc:src/models/dialogue.ts) - Dialogue entry structure
+  - [project.ts](mdc:src/models/project.ts) - Project structure
+  - [rule.ts](mdc:src/models/rule.ts) - Rule structure
+  - [prompt.ts](mdc:src/models/prompt.ts) - Prompt structure
+
+## Coding Style
+1. Use PascalCase for interfaces, types, classes, and enums
+2. Use camelCase for variables, functions, methods, and properties
+3. Use UPPER_CASE for constants
+4. Use readonly for immutable properties
+5. Use private/protected/public access modifiers appropriately
+6. Prefer type inference where types are obvious
+7. Always specify return types for functions and methods
+8. Use explicit type annotations for function parameters
+
+## Error Handling
+1. Create custom error classes for domain-specific errors
+2. Use try/catch blocks for error handling
+3. Implement proper error logging and reporting
+4. Use optional chaining and nullish coalescing for safer code
+
+
+
+

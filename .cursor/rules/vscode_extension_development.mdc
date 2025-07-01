@@ -1,0 +1,50 @@
+---
+description: VS Code Extension Development
+globs: 
+alwaysApply: false
+---
+# VS Code Extension Development Guidelines
+
+## Overview
+This rule provides guidance for developing the Cursor Chat Manager VS Code extension UI components and functionality.
+
+## UI Component Structure
+The extension uses two primary VS Code UI component types:
+1. **TreeViews** - Used for navigation and hierarchical data display
+2. **WebViews** - Used for rich content display and interactive elements
+
+## Component Mapping
+| Component File | Purpose | UI Type |
+|----------------|---------|---------|
+| [projectView.ts](mdc:src/views/projectView.ts) | Project explorer | TreeView |
+| [chatView.ts](mdc:src/views/chatView.ts) | Chat display | WebView |
+| [dialogueView.ts](mdc:src/views/dialogueView.ts) | Individual dialogue | WebView component |
+| [ruleView.ts](mdc:src/views/ruleView.ts) | Rule management | Mixed |
+| [promptView.ts](mdc:src/views/promptView.ts) | Prompt management | WebView |
+| [exportView.ts](mdc:src/views/exportView.ts) | Export options | WebView form |
+
+## Extension Manifest
+- All commands must be registered in [package.json](mdc:package.json)
+- TreeView providers must be registered with proper view containers
+- Context menu contributions should be organized by view
+
+## Message Passing
+- Use proper message passing protocols between extension and WebViews
+- Validate all message data on both sending and receiving ends
+- Handle disposables properly to prevent memory leaks
+
+## Best Practices
+1. Follow VS Code extension guidelines for UI consistency
+2. Use VS Code's theming system for proper light/dark mode support
+3. Implement proper error handling and user feedback
+4. Ensure all UI components are properly disposed
+5. Use proper localization patterns for internationalization
+6. Follow accessibility guidelines for all UI components
+7. Use context to share data between views instead of globals
+
+## WebView Security
+1. Set proper content security policy
+2. Restrict allowed script sources
+3. Validate all user inputs before processing
+4. Use proper nonce generation for scripts
+

@@ -1,0 +1,83 @@
+---
+description: 
+globs: .html,.css
+alwaysApply: false
+---
+# HTML and CSS Guidelines
+
+## Overview
+This rule provides guidance for HTML and CSS development in the Cursor Chat Manager extension, particularly for WebView UI components.
+
+## HTML Structure
+1. Use semantic HTML5 elements appropriately
+2. Maintain proper document structure
+3. Ensure accessibility with proper ARIA attributes
+4. Use unique IDs and descriptive class names
+5. Implement proper form controls with labels
+
+## CSS Organization
+1. Follow a consistent naming convention (BEM recommended)
+2. Organize CSS by component
+3. Minimize CSS specificity issues
+4. Use CSS variables for theming
+5. Implement responsive design with media queries
+
+## VS Code WebView Integration
+1. Use VS Code CSS variables for theming compatibility
+2. Ensure dark/light theme support
+3. Follow VS Code's UI patterns for consistency
+4. Handle WebView lifecycle properly
+
+## Example VS Code Theme Integration
+```css
+/* Example of VS Code theme integration */
+body {
+  background-color: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  margin: 0;
+  padding: 0;
+}
+
+.chat-item {
+  border-bottom: 1px solid var(--vscode-panel-border);
+  padding: 8px;
+}
+
+.chat-item:hover {
+  background-color: var(--vscode-list-hoverBackground);
+}
+
+.chat-item.selected {
+  background-color: var(--vscode-list-activeSelectionBackground);
+  color: var(--vscode-list-activeSelectionForeground);
+}
+```
+
+## HTML Templates
+1. Use template literals for dynamic HTML generation
+2. Sanitize user input to prevent XSS attacks
+3. Implement proper event delegation for dynamic elements
+
+## WebView Components
+1. Use proper message passing between extension and WebView
+2. Structure HTML to match mockups in the documentation
+3. Implement proper event handling
+4. Use CSS Grid and Flexbox for layouts
+5. Ensure proper tab navigation for accessibility
+
+## Performance Considerations
+1. Minimize DOM manipulation
+2. Optimize CSS selectors
+3. Use efficient CSS properties (prefer transforms over position changes)
+4. Implement proper load states for async operations
+5. Defer non-critical rendering
+
+## Accessibility
+1. Ensure proper contrast ratios
+2. Implement keyboard navigation
+3. Use appropriate ARIA attributes
+4. Support screen readers
+5. Handle focus management properly
+

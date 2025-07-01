@@ -1,0 +1,56 @@
+---
+description: Backend Development
+globs: 
+alwaysApply: false
+---
+# Backend Development Guidelines (TypeScript)
+
+## Overview
+This rule provides guidance for developing backend services for the Cursor Chat Manager extension using TypeScript.
+
+## Architecture
+The extension follows a layered architecture:
+1. **Data Access Layer** - Interacts with external data sources and storage
+2. **Business Logic Layer** - Implements core functionality
+3. **UI Layer** - Handles user interface and interaction
+
+## Service Implementation
+Each service should:
+1. Follow single responsibility principle
+2. Implement proper error handling
+3. Use dependency injection pattern
+4. Be testable in isolation
+
+## Key Services
+| Service | Purpose | Key Dependencies |
+|---------|---------|------------------|
+| [chatProcessor.ts](mdc:src/services/chatProcessor.ts) | Process chat data | cursorDataProvider |
+| [tagManager.ts](mdc:src/services/tagManager.ts) | Handle tagging | storageManager |
+| [projectOrganizer.ts](mdc:src/services/projectOrganizer.ts) | Organize projects | storageManager |
+| [exportService.ts](mdc:src/services/exportService.ts) | Handle exports | fileUtils |
+| [ruleManager.ts](mdc:src/services/ruleManager.ts) | Manage rules | fileUtils, storageManager |
+| [promptManager.ts](mdc:src/services/promptManager.ts) | Manage prompts | storageManager |
+
+## TypeScript Best Practices
+1. Use strict type checking (`"strict": true` in tsconfig.json)
+2. Define interfaces for all data models
+3. Avoid `any` type unless absolutely necessary
+4. Use generics for reusable code
+5. Implement proper error handling with custom error types
+6. Use async/await for asynchronous operations
+7. Document all public APIs with JSDoc comments
+8. Use readonly modifiers where appropriate
+9. Use enums for fixed sets of values
+10. Implement proper null handling
+
+## Data Flow Patterns
+1. Follow the sequence diagrams in documentation
+2. Use observable patterns for reactive updates
+3. Implement proper transaction handling for database operations
+4. Use error boundaries for graceful failure handling
+
+## Configuration and Environment
+1. Use environment-specific configuration
+2. Implement feature flags for experimental features
+3. Use dependency injection for testing
+

@@ -1,0 +1,129 @@
+body {
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  color: var(--vscode-foreground);
+  padding: 10px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.chat-header {
+  border-bottom: 1px solid var(--vscode-panel-border);
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+.chat-title {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.chat-date {
+  font-size: 0.9em;
+  color: var(--vscode-descriptionForeground);
+  margin-bottom: 5px;
+}
+
+.chat-tags {
+  margin-bottom: 10px;
+}
+
+.tag {
+  background-color: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground);
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 0.85em;
+  margin-right: 5px;
+}
+
+.dialog-container {
+  margin-bottom: 15px;
+}
+
+.user-message, .ai-message {
+  padding: 10px 15px;
+  margin-bottom: 5px;
+  border-radius: 5px;
+}
+
+.user-message {
+  background-color: var(--vscode-panel-background);
+  border-left: 3px solid var(--vscode-activityBarBadge-background);
+}
+
+.ai-message {
+  background-color: var(--vscode-panel-background);
+  border-left: 3px solid var(--vscode-terminal-ansiCyan);
+}
+
+.message-sender {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.message-content {
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.message-time {
+  font-size: 0.8em;
+  color: var(--vscode-descriptionForeground);
+  margin-left: 10px;
+}
+
+.message-tags {
+  margin-top: 5px;
+  font-size: 0.85em;
+}
+
+.action-bar {
+  display: flex;
+  margin-top: 5px;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+button {
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border: none;
+  padding: 4px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.85em;
+}
+
+button:hover {
+  background-color: var(--vscode-button-hoverBackground);
+}
+
+code {
+  font-family: var(--vscode-editor-font-family);
+  background-color: var(--vscode-textBlockQuote-background);
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+pre {
+  background-color: var(--vscode-textBlockQuote-background);
+  padding: 10px;
+  border-radius: 5px;
+  overflow-x: auto;
+  margin: 10px 0;
+}
+
+pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+  padding-top: 10px;
+  border-top: 1px solid var(--vscode-panel-border);
+} 

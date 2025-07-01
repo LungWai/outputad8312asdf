@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{PROJECT_NAME}}</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+
+    h1, h2 {
+      color: #0078d4;
+    }
+
+    h1 {
+      border-bottom: 1px solid #e0e0e0;
+      padding-bottom: 10px;
+    }
+
+    .metadata {
+      background: #f0f0f0;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      border-left: 4px solid #0078d4;
+      font-size: 14px;
+    }
+
+    .metadata-item {
+      margin-bottom: 8px;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    li {
+      padding: 12px 15px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    li:last-child {
+      border-bottom: none;
+    }
+
+    a {
+      color: #0078d4;
+      text-decoration: none;
+      display: block;
+    }
+
+    a:hover {
+      text-decoration: underline;
+      background-color: #f5faff;
+    }
+
+    .back-link {
+      margin-top: 20px;
+      display: inline-block;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #1e1e1e;
+        color: #e0e0e0;
+      }
+      
+      h1, h2 {
+        color: #3794ff;
+      }
+      
+      h1 {
+        border-bottom-color: #3a3a3a;
+      }
+      
+      .metadata {
+        background: #252525;
+        border-left-color: #3794ff;
+      }
+      
+      ul {
+        background: #252525;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+      
+      li {
+        border-bottom-color: #333;
+      }
+      
+      a {
+        color: #3794ff;
+      }
+      
+      a:hover {
+        background-color: #103151;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>{{PROJECT_NAME}}</h1>
+  {{METADATA}}
+  <h2>Chats</h2>
+  <ul>
+    {{CHAT_LIST}}
+  </ul>
+</body>
+</html> 

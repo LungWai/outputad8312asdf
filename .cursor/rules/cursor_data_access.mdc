@@ -1,0 +1,39 @@
+---
+description: Cursor Data Access Guidelines
+globs: 
+alwaysApply: false
+---
+# Cursor Data Access Guidelines
+
+## Overview
+This rule guides how to access Cursor IDE's internal storage to extract chat data.
+
+## Storage Locations
+- **Windows**: `%APPDATA%\Cursor\User\workspaceStorage`
+- **macOS**: `~/Library/Application Support/Cursor/User/workspaceStorage`
+- **Linux**: `~/.config/Cursor/User/workspaceStorage`
+
+## Access Pattern
+Each subdirectory inside workspaceStorage corresponds to a specific project workspace and contains a `state.vscdb` file—a SQLite database holding chat history and other state information.
+
+## SQL Queries
+Key target keys in queries:
+- `aiService.prompts`
+- `workbench.panel.aichat.view.aichat.chatdata`
+
+## Best Practices
+1. Always handle OS-specific paths using `pathUtils.ts`
+2. Implement proper error handling for database connections
+3. Parse JSON data from database responses carefully
+4. Use connection pooling for better performance
+5. Implement retry mechanisms for database access
+6. Always close database connections after use
+
+## Implementation References
+- See [cursorDataProvider.ts](mdc:src/data/cursorDataProvider.ts) for storage access implementation
+- See [databaseService.ts](mdc:src/data/databaseService.ts) for database operations
+- See [pathUtils.ts](mdc:src/utils/pathUtils.ts) for path resolution logic
+
+## Data Flow
+Follow the sequence diagram in the documentation for proper implementation of data access flow.
+

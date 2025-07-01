@@ -1,0 +1,107 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Module Implementation Guidelines
+
+## Overview
+This rule provides guidance for implementing the various modules of the Cursor Chat Manager extension according to the project structure and requirements.
+
+## Core Module Implementation
+
+### Data Access Layer
+1. **cursorDataProvider.ts**
+   - Implement OS-specific path detection
+   - Create database connection logic
+   - Extract raw chat data from SQLite
+   - Parse JSON data into structured format
+
+2. **storageManager.ts**
+   - Implement VSCode storage API integration
+   - Create data versioning mechanism
+   - Handle synchronization across workspace sessions
+   - Implement proper error handling
+
+3. **databaseService.ts**
+   - Implement SQLite operations with better-sqlite3
+   - Create connection pooling mechanism
+   - Implement error handling and retry logic
+   - Create query execution helpers
+
+### Business Logic Layer
+1. **chatProcessor.ts**
+   - Implement chat data parsing
+   - Create structured chat objects
+   - Handle relationships between chats and dialogues
+   - Create dialogue extraction logic
+
+2. **tagManager.ts**
+   - Implement two-level tagging system
+   - Create tag validation and normalization
+   - Implement tag search and filtering
+   - Create tag suggestion logic
+
+3. **projectOrganizer.ts**
+   - Implement custom project creation
+   - Create chat movement between projects
+   - Implement dialogue extraction to projects
+   - Handle project references and integrity
+
+4. **exportService.ts**
+   - Implement multi-format export (JSON, HTML, text)
+   - Create templating system for HTML exports
+   - Implement sanitization for exports
+   - Create file writing utilities
+
+5. **ruleManager.ts**
+   - Implement .mdc file parsing
+   - Create rule application logic
+   - Implement rule import/export
+   - Handle rule storage and retrieval
+
+6. **promptManager.ts**
+   - Implement prompt template system
+   - Create variable substitution logic
+   - Implement prompt categorization
+   - Handle prompt usage statistics
+
+### UI Layer
+1. **projectView.ts**
+   - Implement TreeView for projects
+   - Create context menu handlers
+   - Implement drag and drop for organization
+   - Handle selection and navigation
+
+2. **chatView.ts**
+   - Implement WebView for chat display
+   - Create chat rendering logic
+   - Implement chat-level actions
+   - Handle message passing with extension
+
+3. **dialogueView.ts**
+   - Implement dialogue rendering
+   - Create dialogue-level actions
+   - Implement tagging interface
+   - Handle extraction dialog
+
+4. **ruleView.ts**
+   - Implement rule management interface
+   - Create rule editor
+   - Implement rule application UI
+   - Handle import/export actions
+
+5. **promptView.ts**
+   - Implement prompt management interface
+   - Create template variable UI
+   - Implement prompt categorization
+   - Handle integration with Cursor
+
+6. **exportView.ts**
+   - Implement export options interface
+   - Create format-specific options
+   - Handle file selection dialog
+   - Implement export progress feedback
+
+## Implementation Sequence
+Follow the implementation plan in the documentation to ensure proper dependency handling and incremental feature development. Verify the mermaid diagram verification sequence to ensure correct flow when every modules is completed
