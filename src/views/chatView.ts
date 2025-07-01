@@ -3,6 +3,8 @@ import { Chat } from '../models/chat';
 import { Dialogue } from '../models/dialogue';
 import { ProjectOrganizer } from '../services/projectOrganizer';
 import { TagManager } from '../services/tagManager';
+import { logger } from '../utils/logger';
+import { LOG_COMPONENTS } from '../config/constants';
 
 export class ChatView {
   private panel: vscode.WebviewPanel | undefined;
@@ -17,35 +19,35 @@ export class ChatView {
   }
   
   public async openChat(chatId: string, projectId: string): Promise<void> {
-    console.log(`ChatView: openChat called with chatId=${chatId}, projectId=${projectId}`);
+    logger.info(LOG_COMPONENTS.VIEW_CHAT, `openChat called with chatId=${chatId}, projectId=${projectId}`);
     
     const project = this.projectOrganizer.getProject(projectId);
     if (!project) {
-      console.error(`ChatView: Project not found: ${projectId}`);
+      logger.error(LOG_COMPONENTS.VIEW_CHAT, `Project not found: ${projectId}`);
       vscode.window.showErrorMessage('Project not found');
       return;
     }
     
     const chat = project.chats.find(c => c.id === chatId);
     if (!chat) {
-      console.error(`ChatView: Chat not found: ${chatId} in project ${projectId}`);
+      logger.error(LOG_COMPONENTS.VIEW_CHAT, `Chat not found: ${chatId} in project ${projectId}`);
       vscode.window.showErrorMessage('Chat not found');
       return;
     }
     
-    console.log(`ChatView: Found chat "${chat.title}" with ${chat.dialogues.length} dialogues`);
+    logger.info(LOG_COMPONENTS.VIEW_CHAT, `Found chat "${chat.title}" with ${chat.dialogues.length} dialogues`);
     this.currentChat = chat;
     
     // If we already have a panel, show it
     if (this.panel) {
-      console.log(`ChatView: Revealing existing panel`);
+      logger.debug(LOG_COMPONENTS.VIEW_CHAT, 'Revealing existing panel');
       this.panel.reveal(vscode.ViewColumn.One);
       await this.updateContent(chat);
       return;
     }
     
     // Otherwise, create a new panel
-    console.log(`ChatView: Creating new webview panel`);
+    logger.debug(LOG_COMPONENTS.VIEW_CHAT, 'Creating new webview panel');
     this.panel = vscode.window.createWebviewPanel(
       'cursor-chat-manager.chatView',
       `Chat: ${chat.title}`,
@@ -69,7 +71,7 @@ export class ChatView {
     
     // Handle disposal
     this.panel.onDidDispose(() => {
-      console.log(`ChatView: Panel disposed`);
+      logger.debug(LOG_COMPONENTS.VIEW_CHAT, 'Panel disposed');
       this.panel = undefined;
       this.disposeWebviewResources();
     }, null, this.disposables);
@@ -82,39 +84,39 @@ export class ChatView {
     );
     
     // Load initial content
-    console.log(`ChatView: Loading initial content`);
+    logger.debug(LOG_COMPONENTS.VIEW_CHAT, 'Loading initial content');
     await this.updateContent(chat);
-    console.log(`ChatView: Initial content loaded`);
+    logger.debug(LOG_COMPONENTS.VIEW_CHAT, 'Initial content loaded');
   }
   
   private async updateContent(chat: Chat): Promise<void> {
     if (!this.panel) { 
-      console.error(`ChatView: updateContent called but panel is undefined`);
+      logger.error(LOG_COMPONENTS.VIEW_CHAT, 'updateContent called but panel is undefined');
       return; 
     }
     
-    console.log(`ChatView: updateContent called for chat "${chat.title}" with ${chat.dialogues.length} dialogues`);
+    logger.debug(LOG_COMPONENTS.VIEW_CHAT, `updateContent called for chat "${chat.title}" with ${chat.dialogues.length} dialogues`);
     
     // Get chat tags
     const chatTags = this.tagManager.getChatTags(chat.id);
-    console.log(`ChatView: Found ${chatTags.length} chat tags`);
+    logger.debug(LOG_COMPONENTS.VIEW_CHAT, `Found ${chatTags.length} chat tags`);
     
     // Generate the HTML content
-    console.log(`ChatView: Generating HTML content...`);
+    logger.debug(LOG_COMPONENTS.VIEW_CHAT, 'Generating HTML content...');
     const htmlContent = this.generateHtmlContent(chat, chatTags);
-    console.log(`ChatView: Generated HTML content (${htmlContent.length} chars)`);
+    logger.debug(LOG_COMPONENTS.VIEW_CHAT, `Generated HTML content (${htmlContent.length} chars)`);
     
     // Update the webview content
     this.panel.webview.html = htmlContent;
-    console.log(`ChatView: Webview HTML content set`);
+    logger.debug(LOG_COMPONENTS.VIEW_CHAT, 'Webview HTML content set');
     
     // Update panel title
     this.panel.title = `Chat: ${chat.title}`;
-    console.log(`ChatView: Panel title updated to "${this.panel.title}"`);
+    logger.debug(LOG_COMPONENTS.VIEW_CHAT, `Panel title updated to "${this.panel.title}"`);
   }
   
   private generateHtmlContent(chat: Chat, chatTags: string[]): string {
-    console.log(`ChatView: generateHtmlContent for chat with ${chat.dialogues.length} dialogues`);
+    logger.debug(LOG_COMPONENTS.VIEW_CHAT, `generateHtmlContent for chat with ${chat.dialogues.length} dialogues`);
     
     // Get CSS URI
     const styleUri = this.panel!.webview.asWebviewUri(
@@ -123,16 +125,16 @@ export class ChatView {
     
     // Generate dialogue HTML
     const dialoguesHtml = chat.dialogues.map((dialogue, index) => {
-      console.log(`ChatView: Processing dialogue ${index}: isUser=${dialogue.isUser}, content length=${dialogue.content.length}`);
+      logger.debug(LOG_COMPONENTS.VIEW_CHAT, `Processing dialogue ${index}: isUser=${dialogue.isUser}, content length=${dialogue.content.length}`);
       const dialogueTags = this.tagManager.getDialogueTags(dialogue.id);
       const html = this.generateDialogueHtml(dialogue, dialogueTags);
-      console.log(`ChatView: Generated dialogue HTML (${html.length} chars)`);
+      logger.debug(LOG_COMPONENTS.VIEW_CHAT, `Generated dialogue HTML (${html.length} chars)`);
       return html;
     }).join('');
     
-    console.log(`ChatView: Generated dialogues HTML: ${dialoguesHtml.length} chars total`);
+    logger.debug(LOG_COMPONENTS.VIEW_CHAT, `Generated dialogues HTML: ${dialoguesHtml.length} chars total`);
     if (dialoguesHtml.length === 0) {
-      console.warn(`ChatView: No dialogue HTML generated!`);
+      logger.warn(LOG_COMPONENTS.VIEW_CHAT, 'No dialogue HTML generated!');
     }
     
     // Add fallback content if no dialogues
@@ -147,7 +149,7 @@ export class ChatView {
       ? `<div class="chat-tags">Tags: ${chatTags.map(tag => `<span class="tag">#${tag}</span>`).join(' ')}</div>`
       : '<div class="chat-tags">No tags</div>';
     
-    console.log(`ChatView: Final content preparation - chat tags: ${chatTagsHtml.length} chars, content: ${contentToDisplay.length} chars`);
+    logger.debug(LOG_COMPONENTS.VIEW_CHAT, `Final content preparation - chat tags: ${chatTagsHtml.length} chars, content: ${contentToDisplay.length} chars`);
 
     return /*html*/`
       <!DOCTYPE html>

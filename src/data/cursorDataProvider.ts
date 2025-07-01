@@ -7,10 +7,12 @@ import * as path from 'path';
 import * as os from 'os';
 import { DatabaseService } from './databaseService';
 import { isChatData } from '../types/cursor';
+import { logger } from '../utils/logger';
+import { LOG_COMPONENTS } from '../config/constants';
 
 // Debug gate
 export const DEBUG = process.env.CURSOR_DEBUG === '1';
-const dbg = (...a: any[]) => DEBUG && console.log('[CDP]', ...a);
+const dbg = (...a: any[]) => DEBUG && logger.debug(LOG_COMPONENTS.DATA_PROVIDER, a.join(' '));
 
 export class CursorDataProvider {
   private static instance: CursorDataProvider;
@@ -23,7 +25,7 @@ export class CursorDataProvider {
     this.initializeStoragePath();
     
     // Log startup info - NO MOCK DATA
-    console.log('CursorDataProvider: Initialized - Mock data generation DISABLED');
+    logger.info(LOG_COMPONENTS.DATA_PROVIDER, 'Initialized - Mock data generation DISABLED');
   }
 
   public static getInstance(): CursorDataProvider {
@@ -59,13 +61,13 @@ export class CursorDataProvider {
 
     
     if (!this.storagePath) {
-      console.warn('CursorDataProvider: No Cursor workspace storage found');
+      logger.warn(LOG_COMPONENTS.DATA_PROVIDER, 'No Cursor workspace storage found');
     }
   }
 
   private async findWorkspaceStorageFolders(): Promise<string[]> {
     if (!this.storagePath || !fs.existsSync(this.storagePath)) {
-      console.log('CursorDataProvider: No valid storage path found');
+      logger.debug(LOG_COMPONENTS.DATA_PROVIDER, 'No valid storage path found');
       return [];
     }
 
@@ -90,7 +92,7 @@ export class CursorDataProvider {
 
       return folders;
     } catch (error) {
-      console.error(`Error reading storage directory: ${error}`);
+      logger.error(LOG_COMPONENTS.DATA_PROVIDER, 'Error reading storage directory', error);
       return [];
     }
   }
@@ -99,7 +101,7 @@ export class CursorDataProvider {
    * Get all chat data from Cursor databases - NO MOCK DATA EVER
    */
   public async getChatData(): Promise<Record<string, any>[]> {
-    console.log('CursorDataProvider: Starting REAL chat data retrieval - NO MOCK DATA');
+    logger.info(LOG_COMPONENTS.DATA_PROVIDER, 'Starting REAL chat data retrieval - NO MOCK DATA');
     
     try {
       const workspaceFolders = await this.findWorkspaceStorageFolders();
@@ -109,7 +111,7 @@ export class CursorDataProvider {
       dbg(`Found ${workspaceFolders.length} workspace folders to process`);
       
       if (workspaceFolders.length === 0) {
-        console.warn('CursorDataProvider: No workspace folders found - returning empty array (NO MOCK DATA)');
+        logger.warn(LOG_COMPONENTS.DATA_PROVIDER, 'No workspace folders found - returning empty array (NO MOCK DATA)');
         return [];
       }
 
@@ -162,7 +164,7 @@ export class CursorDataProvider {
                   processedKeys.add(`${baseKey}.prompts`);
                   processedKeys.add(`aiService.prompts`);
 
-                  console.log(`CursorDataProvider: Found rich chat data at ${result.key}, skipping related prompts-only data`);
+                  logger.debug(LOG_COMPONENTS.DATA_PROVIDER, `Found rich chat data at ${result.key}, skipping related prompts-only data`);
                 } else if (!processedKeys.has(result.key)) {
                   // This is prompts-only data, include it only if no rich version exists
                   allChatData.push({
@@ -179,7 +181,7 @@ export class CursorDataProvider {
 
               }
             } catch (parseError) {
-              console.log(`JSON parse error for key "${result.key}": ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+              logger.debug(LOG_COMPONENTS.DATA_PROVIDER, `JSON parse error for key "${result.key}"`, parseError);
             }
           }
 
@@ -187,13 +189,13 @@ export class CursorDataProvider {
           await this.databaseService.closeConnection();
           
         } catch (error) {
-          console.error(`Error processing workspace folder ${folderPath}: ${error instanceof Error ? error.message : String(error)}`);
+          logger.error(LOG_COMPONENTS.DATA_PROVIDER, `Error processing workspace folder ${folderPath}`, error);
           
           // Ensure connection is closed even if there's an error
           try {
             await this.databaseService.closeConnection();
           } catch (closeError) {
-            console.warn(`Warning: Could not close database connection: ${closeError}`);
+            logger.warn(LOG_COMPONENTS.DATA_PROVIDER, 'Could not close database connection', closeError);
           }
         }
       }
@@ -204,7 +206,7 @@ export class CursorDataProvider {
       return allChatData;
       
     } catch (error) {
-      console.error('CursorDataProvider: Error retrieving chat data:', error);
+      logger.error(LOG_COMPONENTS.DATA_PROVIDER, 'Error retrieving chat data', error);
       return []; // Return empty array, NO MOCK DATA
     }
   }
@@ -249,7 +251,7 @@ export class CursorDataProvider {
         }
       }
     } catch (error) {
-      console.warn('Failed to extract workspace real name:', error);
+      logger.warn(LOG_COMPONENTS.DATA_PROVIDER, 'Failed to extract workspace real name', error);
     }
     return null;
   }
@@ -307,7 +309,7 @@ export class CursorDataProvider {
    * Get projects - based on real workspace databases only
    */
   async getProjects(): Promise<any[]> {
-    console.log('CursorDataProvider: Getting projects from real workspace data...');
+    logger.info(LOG_COMPONENTS.DATA_PROVIDER, 'Getting projects from real workspace data...');
     
     const projects: any[] = [];
     
@@ -332,11 +334,11 @@ export class CursorDataProvider {
         }
       }
       
-      console.log(`CursorDataProvider: Found ${projects.length} real projects with chat data`);
+      logger.info(LOG_COMPONENTS.DATA_PROVIDER, `Found ${projects.length} real projects with chat data`);
       return projects;
       
     } catch (error) {
-      console.error('CursorDataProvider: Error getting projects:', error);
+      logger.error(LOG_COMPONENTS.DATA_PROVIDER, 'Error getting projects', error);
       return [];
     }
   }
@@ -368,13 +370,13 @@ export class CursorDataProvider {
       await this.databaseService.closeConnection();
 
     } catch (error) {
-      console.error(`CursorDataProvider: Error extracting from database ${folderPath}:`, error);
+      logger.error(LOG_COMPONENTS.DATA_PROVIDER, `Error extracting from database ${folderPath}`, error);
 
       // Ensure connection is closed even if there's an error
       try {
         await this.databaseService.closeConnection();
       } catch (closeError) {
-        console.warn(`Warning: Could not close database connection: ${closeError}`);
+        logger.warn(LOG_COMPONENTS.DATA_PROVIDER, 'Could not close database connection', closeError);
       }
     }
 
@@ -385,7 +387,7 @@ export class CursorDataProvider {
    * Clear any cached data and force refresh
    */
   public clearCache(): void {
-    console.log('CursorDataProvider: Clearing cache...');
+    logger.debug(LOG_COMPONENTS.DATA_PROVIDER, 'Clearing cache...');
     this.workspaceStoragePaths = [];
   }
 
@@ -393,7 +395,7 @@ export class CursorDataProvider {
    * Get statistics about available data
    */
   async getDataStatistics(): Promise<any> {
-    console.log('CursorDataProvider: Gathering real data statistics...');
+    logger.debug(LOG_COMPONENTS.DATA_PROVIDER, 'Gathering real data statistics...');
     
     try {
       const projects = await this.getProjects();
@@ -407,7 +409,7 @@ export class CursorDataProvider {
         lastUpdated: new Date().toISOString()
       };
     } catch (error) {
-      console.error('CursorDataProvider: Error getting statistics:', error);
+      logger.error(LOG_COMPONENTS.DATA_PROVIDER, 'Error getting statistics', error);
       return {
         totalProjects: 0,
         totalChats: 0,

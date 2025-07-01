@@ -4,6 +4,8 @@ import * as path from 'path';
 import { Chat } from '../models/chat';
 import { Dialogue } from '../models/dialogue';
 import { Project } from '../models/project';
+import { logger } from '../utils/logger';
+import { LOG_COMPONENTS } from '../config/constants';
 
 export enum ExportFormat {
   JSON = 'json',
@@ -295,7 +297,7 @@ export class ExportService {
       return fs.readFileSync(templateFilePath, 'utf-8');
     } catch (error) {
       // If template doesn't exist, return a basic fallback template
-      console.error(`Failed to load template ${templateName}: ${error}`);
+      logger.error(LOG_COMPONENTS.EXPORT_SERVICE, `Failed to load template ${templateName}`, error);
       
       if (templateName === 'chat.html') {
         return this.getFallbackChatTemplate();
@@ -394,7 +396,7 @@ export class ExportService {
       // Write file
       await fs.promises.writeFile(filePath, content, 'utf-8');
     } catch (error) {
-      console.error(`Error writing to file ${filePath}:`, error);
+      logger.error(LOG_COMPONENTS.EXPORT_SERVICE, `Error writing to file ${filePath}`, error);
       throw error;
     }
   }

@@ -1,6 +1,8 @@
 import { Chat, ChatImpl } from '../models/chat';
 import { Dialogue, DialogueImpl } from '../models/dialogue';
 import { StorageManager } from '../data/storageManager';
+import { logger } from '../utils/logger';
+import { LOG_COMPONENTS } from '../config/constants';
 
 interface TagStats {
   name: string;
@@ -53,7 +55,7 @@ export class TagManager {
         }
       });
     } catch (error) {
-      console.error(`Error initializing tag manager: ${error}`);
+      logger.error(LOG_COMPONENTS.TAG_MANAGER, 'Error initializing tag manager', error);
     }
   }
 
@@ -70,7 +72,7 @@ export class TagManager {
       await this.storageManager.saveData('tagStats', tagStatsObj);
       await this.storageManager.saveData('tagCategories', this.tagCategories);
     } catch (error) {
-      console.error(`Error saving tag manager state: ${error}`);
+      logger.error(LOG_COMPONENTS.TAG_MANAGER, 'Error saving tag manager state', error);
     }
   }
 

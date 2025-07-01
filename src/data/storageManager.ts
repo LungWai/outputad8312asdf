@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import { logger } from '../utils/logger';
+import { LOG_COMPONENTS } from '../config/constants';
 
 export interface StorageData {
   version: string;
@@ -39,7 +41,7 @@ export class StorageManager {
       await this.context.globalState.update(key, storageData);
       return true;
     } catch (error) {
-      console.error(`Error saving data: ${error}`);
+      logger.error(LOG_COMPONENTS.STORAGE_MANAGER, 'Error saving data', error);
       return false;
     }
   }
@@ -60,7 +62,7 @@ export class StorageManager {
       const migratedData = this.migrateDataIfNeeded(storageData);
       return migratedData.data as T;
     } catch (error) {
-      console.error(`Error retrieving data: ${error}`);
+      logger.error(LOG_COMPONENTS.STORAGE_MANAGER, 'Error retrieving data', error);
       return defaultValue;
     }
   }
@@ -74,7 +76,7 @@ export class StorageManager {
       await this.context.globalState.update(key, undefined);
       return true;
     } catch (error) {
-      console.error(`Error removing data: ${error}`);
+      logger.error(LOG_COMPONENTS.STORAGE_MANAGER, 'Error removing data', error);
       return false;
     }
   }
@@ -96,7 +98,7 @@ export class StorageManager {
       
       return keys;
     } catch (error) {
-      console.error(`Error getting keys: ${error}`);
+      logger.error(LOG_COMPONENTS.STORAGE_MANAGER, 'Error getting keys', error);
       return [];
     }
   }
@@ -109,7 +111,7 @@ export class StorageManager {
 
     // Handle migrations between different versions
     // For future use as new versions are introduced
-    console.log(`Migrating data from version ${storageData.version} to ${StorageManager.CURRENT_VERSION}`);
+    logger.info(LOG_COMPONENTS.STORAGE_MANAGER, `Migrating data from version ${storageData.version} to ${StorageManager.CURRENT_VERSION}`);
     
     // For now, just update the version
     return {

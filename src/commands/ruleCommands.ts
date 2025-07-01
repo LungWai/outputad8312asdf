@@ -3,16 +3,18 @@ import * as path from 'path';
 import { RuleView } from '../views/ruleView';
 import { RuleManager } from '../services/ruleManager';
 import { ProjectOrganizer } from '../services/projectOrganizer';
+import { logger } from '../utils/logger';
+import { LOG_COMPONENTS } from '../config/constants';
 
 export function registerRuleCommands(
   context: vscode.ExtensionContext,
   ruleView: RuleView
 ): void {
-  console.log('Cursor Chat Manager: Registering rule commands...');
+  logger.info(LOG_COMPONENTS.EXTENSION, 'Registering rule commands...');
   const ruleManager = RuleManager.getInstance();
 
   // Import rule command
-  console.log('Cursor Chat Manager: Registering importRule command...');
+  logger.debug(LOG_COMPONENTS.EXTENSION, 'Registering importRule command...');
   const importRuleCommand = vscode.commands.registerCommand(
     'cursor-chat-manager.importRule',
     async () => {
@@ -365,5 +367,5 @@ export function registerRuleCommands(
     refreshLocalRulesCommand
   );
 
-  console.log('Cursor Chat Manager: Rule commands registered successfully, including importRule');
+  logger.info(LOG_COMPONENTS.EXTENSION, 'Rule commands registered successfully, including importRule');
 }

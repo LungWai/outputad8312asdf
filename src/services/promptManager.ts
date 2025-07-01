@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import { Prompt, PromptImpl, Variable, VariableImpl } from '../models/prompt';
 import { StorageManager } from '../data/storageManager';
+import { logger } from '../utils/logger';
+import { LOG_COMPONENTS } from '../config/constants';
 
 export class PromptManager {
   private static instance: PromptManager;
@@ -52,7 +54,7 @@ export class PromptManager {
 
       this.initialized = true;
     } catch (error) {
-      console.error('Failed to initialize prompt manager:', error);
+      logger.error(LOG_COMPONENTS.PROMPT_MANAGER, 'Failed to initialize prompt manager', error);
       throw new Error(`Prompt manager initialization failed: ${error}`);
     }
   }
@@ -307,7 +309,7 @@ export class PromptManager {
       // Save categories
       await this.storageManager.saveData('promptCategories', Array.from(this.categories));
     } catch (error) {
-      console.error(`Error saving prompt manager state: ${error}`);
+      logger.error(LOG_COMPONENTS.PROMPT_MANAGER, 'Error saving prompt manager state', error);
     }
   }
 
@@ -338,7 +340,7 @@ export class PromptManager {
 
       return true;
     } catch (error) {
-      console.error('Failed to export prompts:', error);
+      logger.error(LOG_COMPONENTS.PROMPT_MANAGER, 'Failed to export prompts', error);
       return false;
     }
   }
@@ -372,7 +374,7 @@ export class PromptManager {
 
           importedCount++;
         } catch (err) {
-          console.error('Error importing prompt:', err);
+          logger.error(LOG_COMPONENTS.PROMPT_MANAGER, 'Error importing prompt', err);
         }
       }
 
@@ -382,7 +384,7 @@ export class PromptManager {
 
       return importedCount;
     } catch (error) {
-      console.error('Failed to import prompts:', error);
+      logger.error(LOG_COMPONENTS.PROMPT_MANAGER, 'Failed to import prompts', error);
       throw new Error(`Prompt import failed: ${error}`);
     }
   }

@@ -1,6 +1,8 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as yaml from 'yaml';
+import { logger } from '../utils/logger';
+import { LOG_COMPONENTS } from '../config/constants';
 
 export interface Rule {
   id: string;
@@ -77,7 +79,7 @@ export class RuleImpl implements Rule {
       await fs.writeFile(filePath, fileContent, 'utf8');
       return true;
     } catch (error) {
-      console.error(`Error exporting rule to file: ${error}`);
+      logger.error(LOG_COMPONENTS.RULE_MANAGER, 'Error exporting rule to file', error);
       return false;
     }
   }
@@ -144,7 +146,7 @@ export class RuleImpl implements Rule {
         );
       }
     } catch (error) {
-      console.error(`Error reading MDC file: ${error}`);
+      logger.error(LOG_COMPONENTS.RULE_MANAGER, 'Error reading MDC file', error);
       throw new Error(`Failed to parse MDC file: ${error}`);
     }
   }

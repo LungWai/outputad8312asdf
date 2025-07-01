@@ -3,15 +3,17 @@
  * Uses sql.js for JavaScript-based SQLite access without native dependencies
  */
 import { maybeDecode } from '../utils/compression';
+import { logger } from '../utils/logger';
+import { LOG_COMPONENTS } from '../config/constants';
 
 // Try to load sql.js for JavaScript-based SQLite access
 let initSqlJs: any = null;
 
 try {
   initSqlJs = require('sql.js');
-  console.log('DatabaseService: sql.js loaded successfully - real database access enabled');
+  logger.info(LOG_COMPONENTS.DATABASE, 'sql.js loaded successfully - real database access enabled');
 } catch (error) {
-  console.error('DatabaseService: sql.js not available. Install with: npm install sql.js');
+  logger.error(LOG_COMPONENTS.DATABASE, 'sql.js not available. Install with: npm install sql.js', error);
   throw new Error('sql.js is required for database access. Run: npm install sql.js');
 }
 
@@ -44,7 +46,7 @@ export class DatabaseService {
   ];
 
   constructor() {
-    console.log('DatabaseService: Initialized with sql.js for real database access');
+    logger.info(LOG_COMPONENTS.DATABASE, 'Initialized with sql.js for real database access');
   }
 
   /**
@@ -57,9 +59,9 @@ export class DatabaseService {
 
     try {
       this.sqlJs = await initSqlJs();
-      console.log('DatabaseService: sql.js initialized successfully');
+      logger.debug(LOG_COMPONENTS.DATABASE, 'sql.js initialized successfully');
     } catch (error) {
-      console.error('DatabaseService: Failed to initialize sql.js:', error);
+      logger.error(LOG_COMPONENTS.DATABASE, 'Failed to initialize sql.js', error);
       throw new Error('Failed to initialize sql.js SQLite engine');
     }
   }
@@ -75,7 +77,7 @@ export class DatabaseService {
       // Check if we already have a connection for this database
       if (this.connectionPool.has(dbPath)) {
         this.db = this.connectionPool.get(dbPath)!;
-        console.log(`DatabaseService: Reusing existing connection to: ${dbPath}`);
+        logger.debug(LOG_COMPONENTS.DATABASE, `Reusing existing connection to: ${dbPath}`);
         return;
       }
 
@@ -90,7 +92,7 @@ export class DatabaseService {
 
       // Read the SQLite file
       const fileBuffer = fs.readFileSync(dbPath);
-      console.log(`DatabaseService: Read SQLite file: ${dbPath} (${fileBuffer.length} bytes)`);
+      logger.debug(LOG_COMPONENTS.DATABASE, `Read SQLite file: ${dbPath} (${fileBuffer.length} bytes)`);
 
       // Create database from file buffer
       this.db = new this.sqlJs.Database(fileBuffer);
@@ -101,10 +103,10 @@ export class DatabaseService {
       // Clear old cache entries for this database
       this.clearCacheForDatabase(dbPath);
 
-      console.log(`DatabaseService: Opened real database connection to: ${dbPath}`);
+      logger.info(LOG_COMPONENTS.DATABASE, `Opened real database connection to: ${dbPath}`);
 
     } catch (error) {
-      console.error(`DatabaseService: Failed to open connection: ${error}`);
+      logger.error(LOG_COMPONENTS.DATABASE, 'Failed to open connection', error);
       throw new Error(`Failed to connect to database: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
@@ -155,7 +157,7 @@ export class DatabaseService {
         if (this.isValidChatData(val)) {
           results.push({ key: row.key, value: val });
         }
-      } catch(e) { console.warn('row fail', row.key, e); }
+      } catch(e) { logger.warn(LOG_COMPONENTS.DATABASE, `Failed to process row ${row.key}`, e); }
     }
 
     this.setCachedResult(cacheKey, results);
@@ -174,7 +176,7 @@ export class DatabaseService {
     }
 
     try {
-      console.log(`DatabaseService: Executing custom query on real database: ${query.substring(0, 100)}...`);
+      logger.debug(LOG_COMPONENTS.DATABASE, `Executing custom query on real database: ${query.substring(0, 100)}...`);
       
       const stmt = this.db.prepare(query);
       const rows: any[] = [];
@@ -189,11 +191,11 @@ export class DatabaseService {
       }
       stmt.free();
       
-      console.log(`DatabaseService: Custom query returned ${rows.length} rows from real database`);
+      logger.debug(LOG_COMPONENTS.DATABASE, `Custom query returned ${rows.length} rows from real database`);
       return rows;
 
     } catch (error) {
-      console.error(`DatabaseService: Custom query failed: ${error}`);
+      logger.error(LOG_COMPONENTS.DATABASE, 'Custom query failed', error);
       throw error;
     }
   }
@@ -216,12 +218,12 @@ export class DatabaseService {
       }
       stmt.free();
       
-      console.log(`DatabaseService: Found ${keys.length} total keys in real database`);
+      logger.debug(LOG_COMPONENTS.DATABASE, `Found ${keys.length} total keys in real database`);
       
       return keys;
 
     } catch (error) {
-      console.error(`DatabaseService: Failed to get keys: ${error}`);
+      logger.error(LOG_COMPONENTS.DATABASE, 'Failed to get keys', error);
       return [];
     }
   }
@@ -291,16 +293,16 @@ export class DatabaseService {
   public async closeConnection(): Promise<void> {
     // Check if there's actually a connection to close
     if (!this.db || !this.dbPath) {
-      console.log('DatabaseService: No active connection to close');
+      logger.debug(LOG_COMPONENTS.DATABASE, 'No active connection to close');
       return;
     }
 
     try {
       this.db.close();
       this.connectionPool.delete(this.dbPath);
-      console.log(`DatabaseService: Closed real database connection to ${this.dbPath}`);
+      logger.info(LOG_COMPONENTS.DATABASE, `Closed real database connection to ${this.dbPath}`);
     } catch (error) {
-      console.error(`DatabaseService: Error closing connection: ${error}`);
+      logger.error(LOG_COMPONENTS.DATABASE, 'Error closing connection', error);
     } finally {
       // Always reset connection state
       this.db = null;
@@ -313,13 +315,13 @@ export class DatabaseService {
    */
   public closeAllConnections(): void {
     try {
-      console.log(`DatabaseService: Closing ${this.connectionPool.size} real database connections`);
+      logger.info(LOG_COMPONENTS.DATABASE, `Closing ${this.connectionPool.size} real database connections`);
       
       for (const [path, db] of this.connectionPool) {
         try {
           db.close();
         } catch (error) {
-          console.error(`DatabaseService: Error closing connection to ${path}: ${error}`);
+          logger.error(LOG_COMPONENTS.DATABASE, `Error closing connection to ${path}`, error);
         }
       }
       
@@ -329,7 +331,7 @@ export class DatabaseService {
       this.dbPath = '';
       
     } catch (error) {
-      console.error(`DatabaseService: Error closing all connections: ${error}`);
+      logger.error(LOG_COMPONENTS.DATABASE, 'Error closing all connections', error);
     }
   }
 

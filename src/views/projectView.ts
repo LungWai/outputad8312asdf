@@ -3,6 +3,8 @@ import { Project } from '../models/project';
 import { Chat } from '../models/chat';
 import { ProjectOrganizer } from '../services/projectOrganizer';
 import { ChatProcessor } from '../services/chatProcessor';
+import { logger } from '../utils/logger';
+import { LOG_COMPONENTS } from '../config/constants';
 
 export class ProjectTreeItem extends vscode.TreeItem {
   constructor(
@@ -44,11 +46,11 @@ export class ProjectView implements vscode.TreeDataProvider<ProjectTreeItem> {
   }
 
   async getChildren(element?: ProjectTreeItem): Promise<ProjectTreeItem[]> {
-    console.log(`ProjectView.getChildren: Called with element: ${element ? `${element.contextValue}:${element.id}` : 'ROOT'}`);
+    logger.debug(LOG_COMPONENTS.VIEW_PROJECT, `getChildren called with element: ${element ? `${element.contextValue}:${element.id}` : 'ROOT'}`);
     
     // Root level - show "Original Projects" and "Custom Projects" categories
     if (!element) {
-      console.log('ProjectView.getChildren: Returning root categories');
+      logger.debug(LOG_COMPONENTS.VIEW_PROJECT, 'Returning root categories');
       return [
         new ProjectTreeItem(
           'Original Projects',
@@ -70,30 +72,30 @@ export class ProjectView implements vscode.TreeDataProvider<ProjectTreeItem> {
     // Category level - show projects under the category
     if (element.contextValue === 'category') {
       if (element.id === 'original-projects') {
-        console.log('ProjectView.getChildren: Getting original projects...');
+        logger.debug(LOG_COMPONENTS.VIEW_PROJECT, 'Getting original projects...');
         const originalProjects = this.projectOrganizer.getOriginalProjects();
-        console.log(`ProjectView.getChildren: Found ${originalProjects.length} original projects:`);
+        logger.info(LOG_COMPONENTS.VIEW_PROJECT, `Found ${originalProjects.length} original projects`);
         
         originalProjects.forEach((project, index) => {
-          console.log(`  - Project ${index}: "${project.name}" (ID: ${project.id}) with ${project.chats.length} chats`);
+          logger.debug(LOG_COMPONENTS.VIEW_PROJECT, `Project ${index}: "${project.name}" (ID: ${project.id}) with ${project.chats.length} chats`);
           if (project.chats.length > 0) {
             project.chats.slice(0, 2).forEach((chat, chatIndex) => {
-              console.log(`    - Chat ${chatIndex}: "${chat.title}" (${chat.dialogues.length} dialogues)`);
+              logger.debug(LOG_COMPONENTS.VIEW_PROJECT, `  Chat ${chatIndex}: "${chat.title}" (${chat.dialogues.length} dialogues)`);
             });
           }
         });
         
         const items = this.createProjectTreeItems(originalProjects, false);
-        console.log(`ProjectView.getChildren: Created ${items.length} tree items for original projects`);
+        logger.debug(LOG_COMPONENTS.VIEW_PROJECT, `Created ${items.length} tree items for original projects`);
         return items;
         
       } else if (element.id === 'custom-projects') {
-        console.log('ProjectView.getChildren: Getting custom projects...');
+        logger.debug(LOG_COMPONENTS.VIEW_PROJECT, 'Getting custom projects...');
         const customProjects = this.projectOrganizer.getCustomProjects();
-        console.log(`ProjectView.getChildren: Found ${customProjects.length} custom projects:`);
+        logger.info(LOG_COMPONENTS.VIEW_PROJECT, `Found ${customProjects.length} custom projects`);
         
         customProjects.forEach((project, index) => {
-          console.log(`  - Custom Project ${index}: "${project.name}" (ID: ${project.id}) with ${project.chats.length} chats`);
+          logger.debug(LOG_COMPONENTS.VIEW_PROJECT, `Custom Project ${index}: "${project.name}" (ID: ${project.id}) with ${project.chats.length} chats`);
         });
         
         const items = this.createProjectTreeItems(customProjects, true);
@@ -114,32 +116,32 @@ export class ProjectView implements vscode.TreeDataProvider<ProjectTreeItem> {
           )
         );
         
-        console.log(`ProjectView.getChildren: Created ${items.length} tree items for custom projects (including add button)`);
+        logger.debug(LOG_COMPONENTS.VIEW_PROJECT, `Created ${items.length} tree items for custom projects (including add button)`);
         return items;
       }
     }
 
     // Project level - show chats under the project
     if (element.contextValue === 'project' && element.project) {
-      console.log(`ProjectView.getChildren: Getting chats for project "${element.project.name}" (ID: ${element.project.id})`);
-      console.log(`ProjectView.getChildren: Project has ${element.project.chats.length} chats:`);
+      logger.debug(LOG_COMPONENTS.VIEW_PROJECT, `Getting chats for project "${element.project.name}" (ID: ${element.project.id})`);
+      logger.debug(LOG_COMPONENTS.VIEW_PROJECT, `Project has ${element.project.chats.length} chats`);
       
       element.project.chats.forEach((chat, index) => {
-        console.log(`  - Chat ${index}: "${chat.title}" (ID: ${chat.id}) with ${chat.dialogues.length} dialogues`);
+        logger.debug(LOG_COMPONENTS.VIEW_PROJECT, `Chat ${index}: "${chat.title}" (ID: ${chat.id}) with ${chat.dialogues.length} dialogues`);
       });
       
       const chatItems = this.createChatTreeItems(element.project.chats, element.project.id);
-      console.log(`ProjectView.getChildren: Created ${chatItems.length} chat tree items`);
+      logger.debug(LOG_COMPONENTS.VIEW_PROJECT, `Created ${chatItems.length} chat tree items`);
       return chatItems;
     }
 
     // Chat level - show dialogues under the chat
     if (element.contextValue === 'chat' && element.chat) {
-      console.log(`ProjectView.getChildren: Chat level requested for "${element.chat.title}" - returning empty (dialogues shown in ChatView)`);
+      logger.debug(LOG_COMPONENTS.VIEW_PROJECT, `Chat level requested for "${element.chat.title}" - returning empty (dialogues shown in ChatView)`);
       return []; // Dialogues are shown in the chat view, not in the tree
     }
 
-    console.log('ProjectView.getChildren: No matching case, returning empty array');
+    logger.debug(LOG_COMPONENTS.VIEW_PROJECT, 'No matching case, returning empty array');
     return [];
   }
 
@@ -200,16 +202,16 @@ export class ProjectView implements vscode.TreeDataProvider<ProjectTreeItem> {
 
   public async loadProjects(): Promise<{ projectCount: number; chatCount: number } | null> {
     try {
-      console.log('ProjectView: *** STARTING LOAD PROJECTS ***');
+      logger.info(LOG_COMPONENTS.VIEW_PROJECT, '*** STARTING LOAD PROJECTS ***');
 
       // PROOF: Clear all cached/stored data to force fresh processing
-      console.log('ProjectView: *** CLEARING ALL CACHED DATA ***');
+      logger.info(LOG_COMPONENTS.VIEW_PROJECT, '*** CLEARING ALL CACHED DATA ***');
       await this.chatProcessor.clearAllCachedData();
 
       // PROOF: Force fresh data processing to show proof logs
-      console.log('ProjectView: Calling chatProcessor.processChats() to get FRESH data...');
+      logger.info(LOG_COMPONENTS.VIEW_PROJECT, 'Calling chatProcessor.processChats() to get FRESH data...');
       const { projects, chats } = await this.chatProcessor.processChats();
-      console.log(`ProjectView: processChats returned ${projects.length} projects, ${chats.length} chats`);
+      logger.info(LOG_COMPONENTS.VIEW_PROJECT, `processChats returned ${projects.length} projects, ${chats.length} chats`);
 
       // Initialize projectOrganizer with the processed projects
       await this.projectOrganizer.initialize(projects);
@@ -226,7 +228,7 @@ export class ProjectView implements vscode.TreeDataProvider<ProjectTreeItem> {
         chatCount: chats.length
       };
     } catch (error) {
-      console.error(`Error loading projects: ${error}`);
+      logger.error(LOG_COMPONENTS.VIEW_PROJECT, 'Error loading projects', error);
       vscode.window.showErrorMessage('Failed to load Cursor chat data. Please try again.');
       return null;
     }

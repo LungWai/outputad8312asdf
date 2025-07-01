@@ -5,6 +5,8 @@ import { TagManager } from '../services/tagManager';
 import { v4 as uuidv4 } from 'uuid';
 import { ChatProcessor } from '../services/chatProcessor';
 import { ChatView } from '../views/chatView';
+import { logger } from '../utils/logger';
+import { LOG_COMPONENTS } from '../config/constants';
 
 export function registerProjectCommands(
   context: vscode.ExtensionContext, 
@@ -36,7 +38,7 @@ export function registerProjectCommands(
           }
         });
       } catch (error) {
-        console.error(`Error refreshing chats: ${error}`);
+        logger.error(LOG_COMPONENTS.EXTENSION, 'Error refreshing chats', error);
         vscode.window.showErrorMessage('Failed to refresh chats. Please try again.');
       }
     }
@@ -79,7 +81,7 @@ export function registerProjectCommands(
         
         vscode.window.showInformationMessage(`Project "${projectName}" created successfully!`);
       } catch (error) {
-        console.error(`Error creating custom project: ${error}`);
+        logger.error(LOG_COMPONENTS.EXTENSION, 'Error creating custom project', error);
         vscode.window.showErrorMessage('Failed to create custom project. Please try again.');
       }
     }
@@ -122,7 +124,7 @@ export function registerProjectCommands(
         
         vscode.window.showInformationMessage(`Project "${project.name}" deleted successfully!`);
       } catch (error) {
-        console.error(`Error deleting custom project: ${error}`);
+        logger.error(LOG_COMPONENTS.EXTENSION, 'Error deleting custom project', error);
         vscode.window.showErrorMessage('Failed to delete custom project. Please try again.');
       }
     }
@@ -171,7 +173,7 @@ export function registerProjectCommands(
         
         vscode.window.showInformationMessage(`Project renamed to "${newName}" successfully!`);
       } catch (error) {
-        console.error(`Error renaming custom project: ${error}`);
+        logger.error(LOG_COMPONENTS.EXTENSION, 'Error renaming custom project', error);
         vscode.window.showErrorMessage('Failed to rename custom project. Please try again.');
       }
     }
@@ -190,45 +192,45 @@ export function registerProjectCommands(
     'cursor-chat-manager.openChat',
     async (chatId: string, projectId: string) => {
       try {
-        console.log(`ChatCommands: Opening chat: ${chatId} from project: ${projectId}`);
+        logger.info(LOG_COMPONENTS.EXTENSION, `Opening chat: ${chatId} from project: ${projectId}`);
         
         const projectOrganizer = ProjectOrganizer.getInstance();
         const project = projectOrganizer.getProject(projectId);
         
         if (!project) {
-          console.error(`ChatCommands: Project not found: ${projectId}`);
+          logger.error(LOG_COMPONENTS.EXTENSION, `Project not found: ${projectId}`);
           vscode.window.showErrorMessage('Project not found');
           return;
         }
         
         const chat = project.chats.find(c => c.id === chatId);
         if (!chat) {
-          console.error(`ChatCommands: Chat not found: ${chatId} in project ${projectId}`);
+          logger.error(LOG_COMPONENTS.EXTENSION, `Chat not found: ${chatId} in project ${projectId}`);
           vscode.window.showErrorMessage('Chat not found');
           return;
         }
 
-        console.log(`ChatCommands: Found chat: "${chat.title}" with ${chat.dialogues.length} dialogues`);
+        logger.info(LOG_COMPONENTS.EXTENSION, `Found chat: "${chat.title}" with ${chat.dialogues.length} dialogues`);
         
         // Debug: Log first few dialogues
         if (chat.dialogues.length > 0) {
           chat.dialogues.slice(0, 3).forEach((dialogue, index) => {
-            console.log(`ChatCommands: Dialogue ${index}: isUser=${dialogue.isUser}, content="${dialogue.content.substring(0, 100)}..."`);
+            logger.debug(LOG_COMPONENTS.EXTENSION, `Dialogue ${index}: isUser=${dialogue.isUser}, content="${dialogue.content.substring(0, 100)}..."`);
           });
         } else {
-          console.warn(`ChatCommands: Chat "${chat.title}" has no dialogues!`);
+          logger.warn(LOG_COMPONENTS.EXTENSION, `Chat "${chat.title}" has no dialogues!`);
         }
         
         // Create and open ChatView
-        console.log(`ChatCommands: Creating ChatView...`);
+        logger.debug(LOG_COMPONENTS.EXTENSION, 'Creating ChatView...');
         const chatView = new ChatView(context);
         
-        console.log(`ChatCommands: Opening chat view...`);
+        logger.debug(LOG_COMPONENTS.EXTENSION, 'Opening chat view...');
         await chatView.openChat(chatId, projectId);
         
-        console.log(`ChatCommands: Chat view opened successfully for: "${chat.title}"`);
+        logger.info(LOG_COMPONENTS.EXTENSION, `Chat view opened successfully for: "${chat.title}"`);
       } catch (error) {
-        console.error(`ChatCommands: Error opening chat: ${error}`);
+        logger.error(LOG_COMPONENTS.EXTENSION, 'Error opening chat', error);
         vscode.window.showErrorMessage(`Failed to open chat: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
@@ -304,7 +306,7 @@ export function registerProjectCommands(
           `Chat ${mode.value === OrganizationMode.COPY ? 'copied to' : 'moved to'} ${selectedProject.label} successfully!`
         );
       } catch (error) {
-        console.error(`Error organizing chat: ${error}`);
+        logger.error(LOG_COMPONENTS.EXTENSION, 'Error organizing chat', error);
         vscode.window.showErrorMessage('Failed to organize chat. Please try again.');
       }
     }

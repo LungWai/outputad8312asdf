@@ -1,4 +1,6 @@
 import { gunzipSync } from 'zlib';
+import { logger } from './logger';
+import { LOG_COMPONENTS } from '../config/constants';
 
 /**
  * Utility functions for handling compressed data in Cursor storage
@@ -17,7 +19,7 @@ export function maybeDecode(value: Buffer | string): string {
     
     // Check for gzip magic bytes (0x1f 0x8b)
     if (buffer.length >= 2 && buffer[0] === 0x1f && buffer[1] === 0x8b) {
-      console.log('Compression: Detected gzip compressed data, decompressing...');
+      logger.debug(LOG_COMPONENTS.DATA_PROVIDER, 'Detected gzip compressed data, decompressing...');
       const decompressed = gunzipSync(buffer);
       return decompressed.toString('utf8');
     }
@@ -39,7 +41,7 @@ export function maybeDecode(value: Buffer | string): string {
         const decoded = Buffer.from(value, 'base64').toString('utf8');
         // Validate it's valid JSON-like content
         if (decoded.trim().match(/^[\{\[]/) && decoded.trim().match(/[\}\]]$/)) {
-          console.log('Compression: Decoded base64 data successfully');
+          logger.debug(LOG_COMPONENTS.DATA_PROVIDER, 'Decoded base64 data successfully');
           return decoded;
         }
       } catch {
@@ -51,7 +53,7 @@ export function maybeDecode(value: Buffer | string): string {
     return typeof value === 'string' ? value : value.toString('utf8');
     
   } catch (error) {
-    console.error('Compression: Error decoding value:', error);
+    logger.error(LOG_COMPONENTS.DATA_PROVIDER, 'Error decoding value', error);
     // Return original value as fallback
     return typeof value === 'string' ? value : value.toString();
   }
@@ -79,7 +81,7 @@ export function decompressAndParse(value: Buffer | string): any | null {
     const decoded = maybeDecode(value);
     return JSON.parse(decoded);
   } catch (error) {
-    console.error('Compression: Failed to decompress and parse:', error);
+    logger.error(LOG_COMPONENTS.DATA_PROVIDER, 'Failed to decompress and parse', error);
     return null;
   }
 } 

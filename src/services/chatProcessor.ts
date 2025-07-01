@@ -6,10 +6,12 @@ import { CursorDataProvider } from '../data/cursorDataProvider';
 import { StorageManager } from '../data/storageManager';
 import { TagManager } from './tagManager';
 import { WorkspaceData, Prompt, ChatData, isPrompt, isNumericKeyObject, isChatData } from '../types/cursor';
+import { logger } from '../utils/logger';
+import { LOG_COMPONENTS } from '../config/constants';
 
 // Debug gate
 export const DEBUG = process.env.CURSOR_DEBUG === '1';
-const dbg = (...a: any[]) => DEBUG && console.log('[CP]', ...a);
+const dbg = (...a: any[]) => DEBUG && logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, a.join(' '));
 
 export class ChatProcessor {
   private static instance: ChatProcessor;
@@ -33,7 +35,7 @@ export class ChatProcessor {
     const existingTags = this.tagManager.getDialogueTags(dialogue.id);
     if (existingTags && existingTags.length > 0) {
       existingTags.forEach(tag => dialogue.addTag(tag));
-      console.log(`ChatProcessor: Restored ${existingTags.length} tags for dialogue ${dialogue.id}`);
+      logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `Restored ${existingTags.length} tags for dialogue ${dialogue.id}`);
     }
   }
   private isNumericKeyObject(obj: any): boolean {
@@ -79,7 +81,7 @@ export class ChatProcessor {
       try {
         // Log the first few items for debugging
         if (rawChatData.indexOf(item) < 3) {
-          console.log(`ChatProcessor: Sample item ${rawChatData.indexOf(item)}: source="${item.source}", data type=${typeof item.data}, data keys=${item.data && typeof item.data === 'object' ? Object.keys(item.data).join(',') : 'N/A'}`);
+          logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `Sample item ${rawChatData.indexOf(item)}: source="${item.source}", data type=${typeof item.data}, data keys=${item.data && typeof item.data === 'object' ? Object.keys(item.data).join(',') : 'N/A'}`);
         }
 
         // Different processing based on data source
@@ -121,19 +123,19 @@ export class ChatProcessor {
           }
         }
       } catch (error) {
-        console.error(`Error processing chat data: ${error}`);
+        logger.error(LOG_COMPONENTS.CHAT_PROCESSOR, 'Error processing chat data', error);
       }
     }
 
     // Convert Maps to arrays
     const finalProjects = Array.from(projects.values());
-    console.log(`ChatProcessor: *** FINAL PROCESSING RESULTS ***`);
-    console.log(`  - Total items processed: ${rawChatData.length}`);
-    console.log(`  - Valid chat conversations found: ${validChatCount}`);
-    console.log(`  - Invalid/system data skipped: ${invalidDataCount}`);
-    console.log(`  - Final projects: ${finalProjects.length}`);
-    console.log(`  - Final chats: ${chats.length}`);
-    console.log(`ChatProcessor: *** END RESULTS ***`);
+    logger.info(LOG_COMPONENTS.CHAT_PROCESSOR, '*** FINAL PROCESSING RESULTS ***');
+    logger.info(LOG_COMPONENTS.CHAT_PROCESSOR, `  - Total items processed: ${rawChatData.length}`);
+    logger.info(LOG_COMPONENTS.CHAT_PROCESSOR, `  - Valid chat conversations found: ${validChatCount}`);
+    logger.info(LOG_COMPONENTS.CHAT_PROCESSOR, `  - Invalid/system data skipped: ${invalidDataCount}`);
+    logger.info(LOG_COMPONENTS.CHAT_PROCESSOR, `  - Final projects: ${finalProjects.length}`);
+    logger.info(LOG_COMPONENTS.CHAT_PROCESSOR, `  - Final chats: ${chats.length}`);
+    logger.info(LOG_COMPONENTS.CHAT_PROCESSOR, '*** END RESULTS ***');
 
     return {
       projects: finalProjects,
@@ -380,7 +382,7 @@ export class ChatProcessor {
           // Extract workspace/project name from UI state
           if (prompt.name && typeof prompt.name === 'string' && prompt.name.length > 5) {
             extractedWorkspaceName = prompt.name;
-            console.log(`ChatProcessor: Extracted workspace name from UI state: "${extractedWorkspaceName}"`);
+            logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `Extracted workspace name from UI state: "${extractedWorkspaceName}"`);
           }
           
           // Look for nested chat data in UI state
@@ -393,14 +395,14 @@ export class ChatProcessor {
         // Skip if no actual chat data found
         if (!actualChatData) {
           if (promptsToProcess.indexOf(prompt) < 5) {
-            console.log(`ChatProcessor: Skipping item - no chat data found. Keys: ${prompt && typeof prompt === 'object' ? Object.keys(prompt).join(',') : typeof prompt}`);
+            logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `Skipping item - no chat data found. Keys: ${prompt && typeof prompt === 'object' ? Object.keys(prompt).join(',') : typeof prompt}`);
           }
           continue;
         }
 
         // Add null check and debugging
         if (!actualChatData || typeof actualChatData !== 'object') {
-          console.log(`ChatProcessor: Skipping invalid chat data: ${typeof actualChatData}`);
+          logger.warn(LOG_COMPONENTS.CHAT_PROCESSOR, `Skipping invalid chat data: ${typeof actualChatData}`);
           continue;
         }
 
@@ -451,9 +453,9 @@ export class ChatProcessor {
             []
           );
           projects.set(finalProjectId, newProject);
-          console.log(`ChatProcessor: Created new project: "${finalProjectName}" (ID: ${finalProjectId})`);
+          logger.info(LOG_COMPONENTS.CHAT_PROCESSOR, `Created new project: "${finalProjectName}" (ID: ${finalProjectId})`);
         } else {
-          console.log(`ChatProcessor: Using existing project: "${finalProjectName}" (ID: ${finalProjectId})`);
+          logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `Using existing project: "${finalProjectName}" (ID: ${finalProjectId})`);
         }
         
         // Create chat with better null checking
@@ -474,7 +476,7 @@ export class ChatProcessor {
         const existingChatTags = this.tagManager.getChatTags(chatId);
         if (existingChatTags && existingChatTags.length > 0) {
           existingChatTags.forEach(tag => chat.addTag(tag));
-          console.log(`ChatProcessor: Restored ${existingChatTags.length} tags for chat "${chatTitle}"`);
+          logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `Restored ${existingChatTags.length} tags for chat "${chatTitle}"`);
         }
 
         // Process dialogues with enhanced handling
@@ -487,17 +489,17 @@ export class ChatProcessor {
           const project = projects.get(finalProjectId); // Use final project ID
           if (project) {
             project.addChat(chat);
-            console.log(`ChatProcessor: Added chat "${chatTitle}" to project "${project.name}" (now has ${project.chats.length} chats)`);
+            logger.info(LOG_COMPONENTS.CHAT_PROCESSOR, `Added chat "${chatTitle}" to project "${project.name}" (now has ${project.chats.length} chats)`);
           } else {
-            console.error(`ChatProcessor: Failed to find project ${finalProjectId} when adding chat ${chatTitle}`);
+            logger.error(LOG_COMPONENTS.CHAT_PROCESSOR, `Failed to find project ${finalProjectId} when adding chat ${chatTitle}`);
           }
           processedCount++;
-          console.log(`ChatProcessor: Successfully processed chat "${chatTitle}" with ${chat.dialogues.length} dialogues`);
+          logger.info(LOG_COMPONENTS.CHAT_PROCESSOR, `Successfully processed chat "${chatTitle}" with ${chat.dialogues.length} dialogues`);
         } else {
-          console.log(`ChatProcessor: Skipping empty chat "${chatTitle}"`);
+          logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `Skipping empty chat "${chatTitle}"`);
         }
       } catch (error) {
-        console.error(`Error processing prompt data: ${error}`);
+        logger.error(LOG_COMPONENTS.CHAT_PROCESSOR, 'Error processing prompt data', error);
       }
     }
     
@@ -517,8 +519,9 @@ export class ChatProcessor {
       chatData.chatData?.messages &&
       Array.isArray(chatData.chatData.messages)
     ) {
-      console.log(
-        `ChatProcessor: Found ${chatData.chatData.messages.length} rich messages`
+      logger.debug(
+        LOG_COMPONENTS.CHAT_PROCESSOR,
+        `Found ${chatData.chatData.messages.length} rich messages`
       );
       return chatData.chatData.messages;          // ← the assistant lives here
     }
@@ -526,25 +529,25 @@ export class ChatProcessor {
 
     // Try standard formats first
     if (chatData.messages && Array.isArray(chatData.messages)) {
-      console.log(`ChatProcessor: Found ${chatData.messages.length} messages in 'messages' array`);
+      logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `Found ${chatData.messages.length} messages in 'messages' array`);
       return chatData.messages;
     }
 
     // Cursor often uses 'chunks' instead of 'messages'
     if (chatData.chunks && Array.isArray(chatData.chunks)) {
-      console.log(`ChatProcessor: Found ${chatData.chunks.length} messages in 'chunks' array`);
+      logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `Found ${chatData.chunks.length} messages in 'chunks' array`);
       return chatData.chunks;
     }
 
     // Or 'parts'
     if (chatData.parts && Array.isArray(chatData.parts)) {
-      console.log(`ChatProcessor: Found ${chatData.parts.length} messages in 'parts' array`);
+      logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `Found ${chatData.parts.length} messages in 'parts' array`);
       return chatData.parts;
     }
 
     // Or nested in conversation
     if (chatData.conversation && Array.isArray(chatData.conversation)) {
-      console.log(`ChatProcessor: Found ${chatData.conversation.length} messages in 'conversation' array`);
+      logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `Found ${chatData.conversation.length} messages in 'conversation' array`);
       return chatData.conversation;
     }
 
@@ -558,13 +561,13 @@ export class ChatProcessor {
           messages.push(...entry.messages);
         }
       }
-      console.log(`ChatProcessor: Extracted ${messages.length} messages from entries`);
+      logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `Extracted ${messages.length} messages from entries`);
       return messages;
     }
 
     // Single message format
     if (chatData.role && (chatData.content || chatData.text || chatData.message)) {
-      console.log(`ChatProcessor: Processing single message format`);
+      logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, 'Processing single message format');
       return [chatData];
     }
 
@@ -655,7 +658,7 @@ export class ChatProcessor {
 
     // Handle nested chatData structure (rich chat data)
     if (chatData.chatData && typeof chatData.chatData === 'object') {
-      console.log(`ChatProcessor: Detected nested chatData structure, extracting inner data`);
+      logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, 'Detected nested chatData structure, extracting inner data');
       return this.processMessagesFromChatData(chatData.chatData, chat);
     }
 
@@ -678,18 +681,18 @@ export class ChatProcessor {
         messagesProcessed++;
       }
 
-      console.log(`ChatProcessor: Processed single prompt text into ${messagesProcessed} dialogue(s)`);
+      logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `Processed single prompt text into ${messagesProcessed} dialogue(s)`);
       return messagesProcessed;
     }
 
     // Task 2: Extract message array using helper method
     const messages = this.extractAnyMessageArray(chatData);
     if (messages.length === 0) {
-      console.log(`ChatProcessor: No messages found in chat data`);
+      logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, 'No messages found in chat data');
       return 0;
     }
 
-    console.log(`ChatProcessor: Found ${messages.length} messages to process`);
+    logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `Found ${messages.length} messages to process`);
 
     // Helper function to extract text from parts array
     const textFromParts = (parts: any): string =>
@@ -729,7 +732,7 @@ export class ChatProcessor {
     };
 
     // Debug logging to check message structure
-    console.log('ChatProcessor: Sample messages structure:', 
+    logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, 'Sample messages structure:', 
       messages.slice(0, 3).map(m => ({
         role: m.role ?? m.authorKind,
         preview: JSON.stringify(m).slice(0, 80)
@@ -737,7 +740,7 @@ export class ChatProcessor {
     );
 
     // Quick sanity check
-    console.log(messages.slice(0,3).map(m => ({
+    logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, 'Message sanity check:', messages.slice(0,3).map(m => ({
       r: m.role ?? m.authorKind,
       t: textFromParts(m.parts ?? m.content?.parts ?? m.text).slice(0,40)
     })));
@@ -772,11 +775,11 @@ export class ChatProcessor {
         messagesProcessed++;
 
       } catch (error) {
-        console.error(`Error processing message: ${error}`);
+        logger.error(LOG_COMPONENTS.CHAT_PROCESSOR, 'Error processing message', error);
       }
     }
 
-    console.log(`ChatProcessor: Processed ${messagesProcessed} messages into dialogues`);
+    logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `Processed ${messagesProcessed} messages into dialogues`);
     return messagesProcessed;
   }
 
@@ -796,10 +799,10 @@ export class ChatProcessor {
     const baseProjectName = item.workspaceRealName || item.workspace || 'Unknown Project';
     
     // Add detailed debugging for project naming
-    console.log(`ChatProcessor: *** WORKBENCH PROJECT NAMING DEBUG ***`);
-    console.log(`  - item.workspace: ${item.workspace}`);
-    console.log(`  - item.source: ${item.source}`);
-    console.log(`  - Computed baseProjectName: "${baseProjectName}"`);
+    logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, '*** WORKBENCH PROJECT NAMING DEBUG ***');
+    logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `  - item.workspace: ${item.workspace}`);
+    logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `  - item.source: ${item.source}`);
+    logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `  - Computed baseProjectName: "${baseProjectName}"`);
     
     // Try to extract better project name from available data
     let improvedProjectName = baseProjectName;
@@ -807,13 +810,13 @@ export class ChatProcessor {
     // Check item-level data for project hints
     if (item.data && typeof item.data === 'object') {
       const itemKeys = Object.keys(item.data);
-      console.log(`  - Item data keys: ${itemKeys.join(', ')}`);
+      logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `  - Item data keys: ${itemKeys.join(', ')}`);
       
       // Look for workspace or project-related fields in the raw data
       const projectFields = ['workspaceName', 'projectName', 'folderName', 'name'];
       for (const field of projectFields) {
         if (item.data[field] && typeof item.data[field] === 'string') {
-          console.log(`  - Found item.data.${field}: ${item.data[field]}`);
+          logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `  - Found item.data.${field}: ${item.data[field]}`);
           if (!item.data[field].match(/^[a-f0-9]{8,}$/)) { // Avoid hash-like strings
             improvedProjectName = item.data[field];
             break;
@@ -826,9 +829,9 @@ export class ChatProcessor {
     const finalProjectName = improvedProjectName !== baseProjectName ? improvedProjectName : baseProjectName;
     const finalProjectId = `original-${finalProjectName.replace(/\s+/g, '-').toLowerCase()}`;
     
-    console.log(`  - FINAL projectName: "${finalProjectName}"`);
-    console.log(`  - FINAL projectId: "${finalProjectId}"`);
-    console.log(`ChatProcessor: *** END WORKBENCH PROJECT NAMING DEBUG ***`);
+    logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `  - FINAL projectName: "${finalProjectName}"`);
+    logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `  - FINAL projectId: "${finalProjectId}"`);
+    logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, '*** END WORKBENCH PROJECT NAMING DEBUG ***');
     
     // Ensure project exists
     if (!projects.has(finalProjectId)) {
@@ -842,9 +845,9 @@ export class ChatProcessor {
         []
       );
       projects.set(finalProjectId, newProject);
-      console.log(`ChatProcessor: Created new workbench project: "${finalProjectName}" (ID: ${finalProjectId})`);
+      logger.info(LOG_COMPONENTS.CHAT_PROCESSOR, `Created new workbench project: "${finalProjectName}" (ID: ${finalProjectId})`);
     } else {
-      console.log(`ChatProcessor: Using existing workbench project: "${finalProjectName}" (ID: ${finalProjectId})`);
+      logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `Using existing workbench project: "${finalProjectName}" (ID: ${finalProjectId})`);
     }
     
     for (const entry of data.entries) {
@@ -865,7 +868,7 @@ export class ChatProcessor {
         
         // Process dialogues
         if (Array.isArray(entry.conversation)) {
-          console.log(`ChatProcessor: Processing ${entry.conversation.length} workbench messages for chat "${chatTitle}"`);
+          logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `Processing ${entry.conversation.length} workbench messages for chat "${chatTitle}"`);
           
           for (const message of entry.conversation) {
             const dialogueId = message.id || uuidv4();
@@ -892,17 +895,17 @@ export class ChatProcessor {
           const project = projects.get(finalProjectId); // Use final project ID
           if (project) {
             project.addChat(chat);
-            console.log(`ChatProcessor: Added workbench chat "${chatTitle}" to project "${project.name}" (now has ${project.chats.length} chats)`);
+            logger.info(LOG_COMPONENTS.CHAT_PROCESSOR, `Added workbench chat "${chatTitle}" to project "${project.name}" (now has ${project.chats.length} chats)`);
           } else {
-            console.error(`ChatProcessor: Failed to find workbench project ${finalProjectId} when adding chat ${chatTitle}`);
+            logger.error(LOG_COMPONENTS.CHAT_PROCESSOR, `Failed to find workbench project ${finalProjectId} when adding chat ${chatTitle}`);
           }
           processedCount++;
-          console.log(`ChatProcessor: Successfully processed workbench chat "${chatTitle}" with ${chat.dialogues.length} dialogues`);
+          logger.info(LOG_COMPONENTS.CHAT_PROCESSOR, `Successfully processed workbench chat "${chatTitle}" with ${chat.dialogues.length} dialogues`);
         } else {
-          console.log(`ChatProcessor: Skipping empty workbench chat "${chatTitle}"`);
+          logger.debug(LOG_COMPONENTS.CHAT_PROCESSOR, `Skipping empty workbench chat "${chatTitle}"`);
         }
       } catch (error) {
-        console.error(`Error processing workbench chat entry: ${error}`);
+        logger.error(LOG_COMPONENTS.CHAT_PROCESSOR, 'Error processing workbench chat entry', error);
       }
     }
     
@@ -926,7 +929,7 @@ export class ChatProcessor {
       
       return true;
     } catch (error) {
-      console.error(`Error saving processed data: ${error}`);
+      logger.error(LOG_COMPONENTS.CHAT_PROCESSOR, 'Error saving processed data', error);
       return false;
     }
   }
@@ -946,7 +949,7 @@ export class ChatProcessor {
 
       return { projects, chats };
     } catch (error) {
-      console.error(`Error loading processed data: ${error}`);
+      logger.error(LOG_COMPONENTS.CHAT_PROCESSOR, 'Error loading processed data', error);
       return { projects: [], chats: [] };
     }
   }
@@ -955,7 +958,7 @@ export class ChatProcessor {
    * Clear all cached and stored data to force fresh processing
    */
   public async clearAllCachedData(): Promise<void> {
-    console.log('ChatProcessor: Clearing all cached and stored data');
+    logger.info(LOG_COMPONENTS.CHAT_PROCESSOR, 'Clearing all cached and stored data');
 
     // Clear storage
     await this.storageManager.removeData('projects');

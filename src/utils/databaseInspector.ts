@@ -1,6 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { logger } from './logger';
+import { LOG_COMPONENTS } from '../config/constants';
 
 /**
  * Database Inspector utility to examine SQLite database structure
@@ -13,7 +15,7 @@ export class DatabaseInspector {
    */
   public static async inspectDatabase(dbPath: string): Promise<any> {
     try {
-      console.log(`DatabaseInspector: Inspecting database at ${dbPath}`);
+      logger.info(LOG_COMPONENTS.DATABASE, `Inspecting database at ${dbPath}`);
       
       // Check if file exists
       if (!fs.existsSync(dbPath)) {
@@ -24,14 +26,14 @@ export class DatabaseInspector {
       const fileBuffer = fs.readFileSync(dbPath);
       const fileSize = fileBuffer.length;
       
-      console.log(`DatabaseInspector: File size: ${fileSize} bytes`);
+      logger.debug(LOG_COMPONENTS.DATABASE, `File size: ${fileSize} bytes`);
       
       // Try to find text patterns that might indicate table names or data
       const fileText = fileBuffer.toString('utf8', 0, Math.min(10000, fileSize));
       
       // Look for common SQLite patterns
       const sqliteHeader = fileBuffer.toString('ascii', 0, 16);
-      console.log(`DatabaseInspector: SQLite header: ${sqliteHeader}`);
+      logger.debug(LOG_COMPONENTS.DATABASE, `SQLite header: ${sqliteHeader}`);
       
       // Look for potential table names or chat-related keywords
       const chatKeywords = [
@@ -46,14 +48,14 @@ export class DatabaseInspector {
         }
       });
       
-      console.log(`DatabaseInspector: Found keywords: ${foundKeywords.join(', ')}`);
+      logger.debug(LOG_COMPONENTS.DATABASE, `Found keywords: ${foundKeywords.join(', ')}`);
       
       // Try to extract potential JSON data
       const jsonMatches = fileText.match(/\{[^{}]*"[^"]*"[^{}]*\}/g);
       if (jsonMatches) {
-        console.log(`DatabaseInspector: Found ${jsonMatches.length} potential JSON objects`);
+        logger.debug(LOG_COMPONENTS.DATABASE, `Found ${jsonMatches.length} potential JSON objects`);
         jsonMatches.slice(0, 3).forEach((match, index) => {
-          console.log(`DatabaseInspector: JSON sample ${index + 1}: ${match.substring(0, 200)}...`);
+          logger.debug(LOG_COMPONENTS.DATABASE, `JSON sample ${index + 1}: ${match.substring(0, 200)}...`);
         });
       }
       
@@ -66,7 +68,7 @@ export class DatabaseInspector {
       };
       
     } catch (error) {
-      console.error(`DatabaseInspector: Error inspecting database ${dbPath}:`, error);
+      logger.error(LOG_COMPONENTS.DATABASE, `Error inspecting database ${dbPath}`, error);
       throw error;
     }
   }
@@ -85,20 +87,20 @@ export class DatabaseInspector {
         'AppData', 'Roaming', 'Cursor', 'User', 'workspaceStorage'
       );
       
-      console.log(`DatabaseInspector: Scanning ${cursorStoragePath}`);
+      logger.info(LOG_COMPONENTS.DATABASE, `Scanning ${cursorStoragePath}`);
       
       if (!fs.existsSync(cursorStoragePath)) {
         throw new Error(`Cursor storage path does not exist: ${cursorStoragePath}`);
       }
       
       const workspaceFolders = fs.readdirSync(cursorStoragePath);
-      console.log(`DatabaseInspector: Found ${workspaceFolders.length} workspace folders`);
+      logger.info(LOG_COMPONENTS.DATABASE, `Found ${workspaceFolders.length} workspace folders`);
       
       for (const folder of workspaceFolders.slice(0, 5)) { // Limit to first 5 for performance
         const dbPath = path.join(cursorStoragePath, folder, 'state.vscdb');
         
         if (fs.existsSync(dbPath)) {
-          console.log(`DatabaseInspector: Inspecting ${folder}`);
+          logger.debug(LOG_COMPONENTS.DATABASE, `Inspecting ${folder}`);
           try {
             const inspection = await this.inspectDatabase(dbPath);
             results.push({
@@ -106,13 +108,13 @@ export class DatabaseInspector {
               ...inspection
             });
           } catch (error) {
-            console.error(`DatabaseInspector: Failed to inspect ${folder}:`, error);
+            logger.error(LOG_COMPONENTS.DATABASE, `Failed to inspect ${folder}`, error);
           }
         }
       }
       
     } catch (error) {
-      console.error('DatabaseInspector: Error scanning workspace storages:', error);
+      logger.error(LOG_COMPONENTS.DATABASE, 'Error scanning workspace storages', error);
     }
     
     return results;

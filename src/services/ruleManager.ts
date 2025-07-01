@@ -3,6 +3,8 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { Rule, RuleImpl } from '../models/rule';
 import { StorageManager } from '../data/storageManager';
+import { logger } from '../utils/logger';
+import { LOG_COMPONENTS } from '../config/constants';
 
 export class RuleManager {
   private static instance: RuleManager;
@@ -50,7 +52,7 @@ export class RuleManager {
 
       this.initialized = true;
     } catch (error) {
-      console.error('Failed to initialize rule manager:', error);
+      logger.error(LOG_COMPONENTS.RULE_MANAGER, 'Failed to initialize rule manager', error);
       throw new Error(`Rule manager initialization failed: ${error}`);
     }
   }
@@ -126,7 +128,7 @@ export class RuleManager {
       
       return rule;
     } catch (error) {
-      console.error('Failed to import rule from file:', error);
+      logger.error(LOG_COMPONENTS.RULE_MANAGER, 'Failed to import rule from file', error);
       throw new Error(`Rule import failed: ${error}`);
     }
   }
@@ -178,7 +180,7 @@ export class RuleManager {
       
       await this.storageManager.saveData('projectRules', projectRulesObj);
     } catch (error) {
-      console.error(`Error saving rule manager state: ${error}`);
+      logger.error(LOG_COMPONENTS.RULE_MANAGER, 'Error saving rule manager state', error);
     }
   }
 
@@ -368,7 +370,7 @@ export class RuleManager {
         }
       }
     } catch (error) {
-      console.error('Error importing local rules:', error);
+      logger.error(LOG_COMPONENTS.RULE_MANAGER, 'Error importing local rules', error);
     }
   }
 
@@ -401,10 +403,10 @@ export class RuleManager {
               };
 
               this.globalRules.push(rule);
-              console.log(`Auto-imported local rule: ${rule.name} from ${filePath}`);
+              logger.info(LOG_COMPONENTS.RULE_MANAGER, `Auto-imported local rule: ${rule.name} from ${filePath}`);
             }
           } catch (error) {
-            console.error(`Error importing rule from ${filePath}:`, error);
+            logger.error(LOG_COMPONENTS.RULE_MANAGER, `Error importing rule from ${filePath}`, error);
           }
         }
       }
@@ -415,7 +417,7 @@ export class RuleManager {
       // Notify that rules have been updated
       this.notifyRulesUpdated();
     } catch (error) {
-      console.error(`Error scanning directory ${directoryPath}:`, error);
+      logger.error(LOG_COMPONENTS.RULE_MANAGER, `Error scanning directory ${directoryPath}`, error);
     }
   }
 
